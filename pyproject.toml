@@ -29,7 +29,9 @@ classifiers = [
   "Typing :: Typed",
 ]
 dynamic = ["version"]
-dependencies = []
+dependencies = [
+  "ophyd"
+]
 
 [project.optional-dependencies]
 test = [
@@ -39,6 +41,7 @@ test = [
 dev = [
   "pytest >=6",
   "pytest-cov >=3",
+  "pandas",
 ]
 docs = [
   "sphinx>=7.0",
