@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import re
 from collections import defaultdict
-from typing import Any
+from typing import Any, Callable
 
 from caproto import (  # type: ignore[import-not-found]
     ChannelChar,
@@ -43,6 +43,10 @@ PLUGIN_TYPE_PVS = [
 
 
 class ReallyDefaultDict(defaultdict[str, ChannelData]):
+    def __init__(self, *args: Any, **kwargs: dict[str, Any]) -> None:
+        super().__init__(*args, **kwargs)
+        self.default_factory: Callable[[str], ChannelData] = self.default_factory  # type: ignore[assignment]
+
     def __contains__(self, key: object) -> bool:
         return True
 
@@ -52,7 +56,7 @@ class ReallyDefaultDict(defaultdict[str, ChannelData]):
             return self[key]
         if key.endswith(("_RBV", ":RBV")):
             return self[key[:-4]]
-        self[key] = self.default_factory(key)  # type: ignore[call-arg,misc]
+        self[key] = self.default_factory(key)
         return self[key]
 
 
@@ -61,8 +65,9 @@ class CDIBlackHoleIOC(PVGroup):
         # Initialize the explicit pv properties
         super().__init__(*args, prefix="", **kwargs)
         # Overwrite the pvdb with the blackhole, while keeping the explicit pv properties
-        self.old_pvdb = self.pvdb.copy()  # type: ignore[has-type]
-        self.pvdb = ReallyDefaultDict(self.fabricate_channel)  # type: ignore[arg-type]
+        self.pvdb: dict[str, ChannelData] = self.pvdb
+        self.old_pvdb = self.pvdb.copy()
+        self.pvdb = ReallyDefaultDict(self.fabricate_channel)
 
     def fabricate_channel(self, key: str) -> ChannelData:
         # If the channel already exists from initialization, return it

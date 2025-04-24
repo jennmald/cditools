@@ -37,6 +37,7 @@ dependencies = [
 test = [
   "pytest >=6",
   "pytest-cov >=3",
+  "caproto[standard] >=0.4.2rc1,!=1.2.0",
 ]
 dev = [
   "caproto[standard] >=0.4.2rc1,!=1.2.0",
