@@ -1,35 +1,38 @@
+from __future__ import annotations
+
 import os
 import threading
 import time
-import pytest
-from caproto.server import run
 
-from cditools.simulated.black_hole import CDIBlackHoleIOC
+import pytest
+from caproto.server import run  # type: ignore[import-not-found]
+
 from cditools.motors import (
-    SltWB1,
-    FltrDM1,
-    FSVPM,
-    FSHPM,
+    BPMDM3,
+    BPMDM4,
     FSDM2,
+    FSDM3,
+    FSHPM,
+    FSVPM,
+    IMDM2,
+    FltrDM1,
+    Gon1,
+    MirHPM,
+    MirKBh,
+    MirKBv,
+    MirVPM,
     MonoDMM,
     MonoHDCM,
-    SltVPM,
-    SltHPM,
-    MirVPM,
-    IMDM2,
-    MirHPM,
-    SltDM3,
-    BPMDM3,
-    FSDM3,
-    MirKBv,
-    MirKBh,
-    BPMDM4,
-    WndExit,
-    Gon1,
-    SltBCUU,
-    SltBCUD,
     Qstar1,
+    SltBCUD,
+    SltBCUU,
+    SltDM3,
+    SltHPM,
+    SltVPM,
+    SltWB1,
+    WndExit,
 )
+from cditools.simulated.black_hole import CDIBlackHoleIOC
 
 
 @pytest.fixture(scope="session")

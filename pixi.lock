@@ -371,8 +371,8 @@ packages:
   requires_python: '>=3.8'
 - pypi: .
   name: cditools
-  version: 0.1.dev4+gef22eb2.d20250424
-  sha256: f689224c211c7f366d73e5ef1ccf491a3f2f24aa99fd1082e96f9937eb11f9c4
+  version: 0.1.dev5+g64696e2.d20250424
+  sha256: c6ec49381cdea5eb5c112853ddcc9e5ae2150d1a45455e4786b4bc18ba8de093
   requires_dist:
   - ophyd
   - pytest>=6 ; extra == 'test'
