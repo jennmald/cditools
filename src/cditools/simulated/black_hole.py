@@ -148,7 +148,3 @@ Press return if you have acknowledged the above, or Ctrl-C to quit.""")
     _, run_options = ioc_arg_parser(default_prefix="", desc="PV black hole")
     run_options["interfaces"] = ["127.0.0.1"]
     run(CDIBlackHoleIOC().pvdb, **run_options)
-
-
-if __name__ == "__main__":
-    main()
