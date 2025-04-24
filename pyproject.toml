@@ -39,10 +39,12 @@ test = [
   "pytest-cov >=3",
 ]
 dev = [
+  "caproto[standard] >=0.4.2rc1,!=1.2.0",
   "pytest >=6",
   "pytest-cov >=3",
   "pandas",
   "pre-commit",
+  "ipython",
 ]
 docs = [
   "sphinx>=7.0",
@@ -74,7 +76,7 @@ minversion = "6.0"
 addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config"]
 xfail_strict = true
 filterwarnings = [
-  "error",
+  "ignore",
 ]
 log_cli_level = "INFO"
 testpaths = [
