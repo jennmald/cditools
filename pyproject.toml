@@ -61,6 +61,8 @@ Homepage = "https://github.com/nsls2/cditools"
 Discussions = "https://github.com/nsls2/cditools/discussions"
 Changelog = "https://github.com/nsls2/cditools/releases"
 
+[project.scripts]
+black-hole-ioc = "cditools.simulated.black_hole:main"
 
 [tool.setuptools_scm]
 write_to = "src/cditools/_version.py"
@@ -173,8 +175,6 @@ default = { solve-group = "default" }
 dev = { features = ["dev"], solve-group = "default" }
 docs = { features = ["docs"], solve-group = "default" }
 test = { features = ["test"], solve-group = "default" }
-
-[tool.pixi.tasks]
 
 [tool.codespell]
 skip = '*.lock'

@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import os
-import threading
+from subprocess import PIPE, Popen
 import time
 
 import pytest
-from caproto.server import run  # type: ignore[import-not-found]
 
 from cditools.motors import (
     BPMDM3,
@@ -32,23 +31,31 @@ from cditools.motors import (
     SltWB1,
     WndExit,
 )
-from cditools.simulated.black_hole import CDIBlackHoleIOC
 
 
 @pytest.fixture(scope="session")
 def black_hole_ioc():
     os.environ["EPICS_CA_ADDR_LIST"] = "127.0.0.1"
     os.environ["EPICS_CA_AUTO_ADDR_LIST"] = "NO"
-    server_thread = threading.Thread(
-        target=run,
-        args=(CDIBlackHoleIOC().pvdb,),
-        kwargs={"interfaces": ["127.0.0.1"]},
-        daemon=True,
-    )
-    server_thread.start()
-    time.sleep(3.0)
+    p = Popen(["black-hole-ioc", "--interfaces", "127.0.0.1"], stdout=PIPE)
+    if not p.stdout:
+        msg = "Failed to start black-hole-ioc"
+        raise RuntimeError(msg)
+    start_time = time.time()
+    timeout = 30  # seconds
+    while True:
+        line = p.stdout.readline().decode("utf-8")
+        if line.strip().endswith("Server startup complete."):
+            break
+        if time.time() - start_time > timeout:
+            p.terminate()
+            raise RuntimeError("Timeout waiting for black-hole-ioc to start")
+        if not line:  # Process ended without expected output
+            raise RuntimeError("black-hole-ioc process ended unexpectedly")
+        time.sleep(0.1)  # Small delay to prevent CPU spinning
     yield
-    server_thread.join(timeout=1.0)
+    p.terminate()
+    p.wait()
 
 
 def test_motors_can_connect(black_hole_ioc):
