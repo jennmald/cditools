@@ -46,6 +46,7 @@ dev = [
   "pandas",
   "pre-commit",
   "ipython",
+  "ruff",
 ]
 docs = [
   "sphinx>=7.0",

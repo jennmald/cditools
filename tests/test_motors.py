@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import os
-from subprocess import PIPE, Popen
 import time
+from subprocess import PIPE, Popen
 
 import pytest
 
@@ -49,9 +49,11 @@ def black_hole_ioc():
             break
         if time.time() - start_time > timeout:
             p.terminate()
-            raise RuntimeError("Timeout waiting for black-hole-ioc to start")
+            msg = "Timeout waiting for black-hole-ioc to start"
+            raise RuntimeError(msg)
         if not line:  # Process ended without expected output
-            raise RuntimeError("black-hole-ioc process ended unexpectedly")
+            msg = "black-hole-ioc process ended unexpectedly"
+            raise RuntimeError(msg)
         time.sleep(0.1)  # Small delay to prevent CPU spinning
     yield
     p.terminate()
