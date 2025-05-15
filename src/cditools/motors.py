@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import ClassVar
-
 from ophyd import Component as Cpt  # type: ignore[import-not-found]
 from ophyd import Device, EpicsMotor
 
