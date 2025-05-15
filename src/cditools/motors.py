@@ -19,44 +19,30 @@ class SltWB1(Device):
     hc = Cpt(EpicsMotor, "-Ax:HC}Mtr")
     vg = Cpt(EpicsMotor, "-Ax:VG}Mtr")
     vc = Cpt(EpicsMotor, "-Ax:VC}Mtr")
-    _default_read_attrs: ClassVar[list[str]] = [
-        "i",
-        "o",
-        "b",
-        "t",
-        "hg",
-        "hc",
-        "vg",
-        "vc",
-    ]
 
 
 class FltrDM1(Device):
     """Ophyd Device for Fltr DM1"""
 
     y = Cpt(EpicsMotor, "-Ax:Y}Mtr")
-    _default_read_attrs: ClassVar[list[str]] = ["y"]
 
 
 class FSVPM(Device):
     """Ophyd Device for FS VPM"""
 
     y = Cpt(EpicsMotor, "-Ax:Y}Mtr")
-    _default_read_attrs: ClassVar[list[str]] = ["y"]
 
 
 class FSHPM(Device):
     """Ophyd Device for FS HPM"""
 
     y = Cpt(EpicsMotor, "-Ax:Y}Mtr")
-    _default_read_attrs: ClassVar[list[str]] = ["y"]
 
 
 class FSDM2(Device):
     """Ophyd Device for FS DM2"""
 
     y = Cpt(EpicsMotor, "-Ax:Y}Mtr")
-    _default_read_attrs: ClassVar[list[str]] = ["y"]
 
 
 class MonoDMM(Device):
@@ -71,17 +57,6 @@ class MonoDMM(Device):
     tz = Cpt(EpicsMotor, "-Ax:TZ}Mtr")
     fp = Cpt(EpicsMotor, "-Ax:FP}Mtr")
     fr = Cpt(EpicsMotor, "-Ax:FR}Mtr")
-    _default_read_attrs: ClassVar[list[str]] = [
-        "tx",
-        "ty",
-        "bragg",
-        "roll",
-        "hg",
-        "pitch",
-        "tz",
-        "fp",
-        "fr",
-    ]
 
 
 class MonoHDCM(Device):
@@ -94,15 +69,6 @@ class MonoHDCM(Device):
     pitch = Cpt(EpicsMotor, "-Ax:Pitch}Mtr")
     roll = Cpt(EpicsMotor, "-Ax:Roll}Mtr")
     fp = Cpt(EpicsMotor, "-Ax:FP}Mtr")
-    _default_read_attrs: ClassVar[list[str]] = [
-        "tx",
-        "ty",
-        "bragg",
-        "hg",
-        "pitch",
-        "roll",
-        "fp",
-    ]
 
 
 class SltVPM(Device):
@@ -112,7 +78,6 @@ class SltVPM(Device):
     hc = Cpt(EpicsMotor, "-Ax:HC}Mtr")
     vg = Cpt(EpicsMotor, "-Ax:VG}Mtr")
     vc = Cpt(EpicsMotor, "-Ax:VC}Mtr")
-    _default_read_attrs: ClassVar[list[str]] = ["hg", "hc", "vg", "vc"]
 
 
 class SltHPM(Device):
@@ -122,7 +87,6 @@ class SltHPM(Device):
     hc = Cpt(EpicsMotor, "-Ax:HC}Mtr")
     vg = Cpt(EpicsMotor, "-Ax:VG}Mtr")
     vc = Cpt(EpicsMotor, "-Ax:VC}Mtr")
-    _default_read_attrs: ClassVar[list[str]] = ["hg", "hc", "vg", "vc"]
 
 
 class MirVPM(Device):
@@ -139,26 +103,12 @@ class MirVPM(Device):
     db = Cpt(EpicsMotor, "-Ax:DB}Mtr")
     bnd = Cpt(EpicsMotor, "-Ax:Bnd}Mtr")
     bndoff = Cpt(EpicsMotor, "-Ax:BndOff}Mtr")
-    _default_read_attrs: ClassVar[list[str]] = [
-        "yuc",
-        "ydi",
-        "ydo",
-        "pitch",
-        "roll",
-        "ty",
-        "tx",
-        "ub",
-        "db",
-        "bnd",
-        "bndoff",
-    ]
 
 
 class IMDM2(Device):
     """Ophyd Device for IM DM2"""
 
     y = Cpt(EpicsMotor, "-Ax:Y}Mtr")
-    _default_read_attrs: ClassVar[list[str]] = ["y"]
 
 
 class MirHPM(Device):
@@ -178,22 +128,6 @@ class MirHPM(Device):
     xd = Cpt(EpicsMotor, "-Ax:XD}Mtr")
     tx = Cpt(EpicsMotor, "-Ax:TX}Mtr")
     yaw = Cpt(EpicsMotor, "-Ax:Yaw}Mtr")
-    _default_read_attrs: ClassVar[list[str]] = [
-        "yuc",
-        "ydi",
-        "ydo",
-        "pitch",
-        "roll",
-        "ty",
-        "ub",
-        "db",
-        "bnd",
-        "bndoff",
-        "xu",
-        "xd",
-        "tx",
-        "yaw",
-    ]
 
 
 class SltDM3(Device):
@@ -207,16 +141,6 @@ class SltDM3(Device):
     hc = Cpt(EpicsMotor, "-Ax:HC}Mtr")
     vg = Cpt(EpicsMotor, "-Ax:VG}Mtr")
     vc = Cpt(EpicsMotor, "-Ax:VC}Mtr")
-    _default_read_attrs: ClassVar[list[str]] = [
-        "i",
-        "o",
-        "b",
-        "t",
-        "hg",
-        "hc",
-        "vg",
-        "vc",
-    ]
 
 
 class BPMDM3(Device):
@@ -225,14 +149,12 @@ class BPMDM3(Device):
     tx = Cpt(EpicsMotor, "-Ax:TX}Mtr")
     ty = Cpt(EpicsMotor, "-Ax:TY}Mtr")
     foil = Cpt(EpicsMotor, "-Ax:Foil}Mtr")
-    _default_read_attrs: ClassVar[list[str]] = ["tx", "ty", "foil"]
 
 
 class FSDM3(Device):
     """Ophyd Device for FS DM3"""
 
     fs = Cpt(EpicsMotor, "-Ax:FS}Mtr")
-    _default_read_attrs: ClassVar[list[str]] = ["fs"]
 
 
 class MirKBv(Device):
@@ -252,22 +174,6 @@ class MirKBv(Device):
     tz = Cpt(EpicsMotor, "-Ax:TZ}Mtr")
     pitch = Cpt(EpicsMotor, "-Ax:Pitch}Mtr")
     fs = Cpt(EpicsMotor, "-Ax:FS}Mtr")
-    _default_read_attrs: ClassVar[list[str]] = [
-        "hg",
-        "hc",
-        "vg",
-        "vc",
-        "yuc",
-        "ydi",
-        "ydo",
-        "yaw",
-        "roll",
-        "ty",
-        "tx",
-        "tz",
-        "pitch",
-        "fs",
-    ]
 
 
 class MirKBh(Device):
@@ -287,22 +193,6 @@ class MirKBh(Device):
     tz = Cpt(EpicsMotor, "-Ax:TZ}Mtr")
     pitch = Cpt(EpicsMotor, "-Ax:Pitch}Mtr")
     fs = Cpt(EpicsMotor, "-Ax:FS}Mtr")
-    _default_read_attrs: ClassVar[list[str]] = [
-        "hg",
-        "hc",
-        "vg",
-        "vc",
-        "yuc",
-        "ydi",
-        "ydo",
-        "yaw",
-        "roll",
-        "ty",
-        "tx",
-        "tz",
-        "pitch",
-        "fs",
-    ]
 
 
 class BPMDM4(Device):
@@ -310,7 +200,6 @@ class BPMDM4(Device):
 
     tx = Cpt(EpicsMotor, "-Ax:TX}Mtr")
     ty = Cpt(EpicsMotor, "-Ax:TY}Mtr")
-    _default_read_attrs: ClassVar[list[str]] = ["tx", "ty"]
 
 
 class WndExit(Device):
@@ -318,7 +207,6 @@ class WndExit(Device):
 
     tx = Cpt(EpicsMotor, "-Ax:TX}Mtr")
     ty = Cpt(EpicsMotor, "-Ax:TY}Mtr")
-    _default_read_attrs: ClassVar[list[str]] = ["tx", "ty"]
 
 
 class Gon1(Device):
@@ -343,27 +231,6 @@ class Gon1(Device):
     xp = Cpt(EpicsMotor, "-Ax:XP}Mtr")
     yp = Cpt(EpicsMotor, "-Ax:YP}Mtr")
     zp = Cpt(EpicsMotor, "-Ax:ZP}Mtr")
-    _default_read_attrs: ClassVar[list[str]] = [
-        "rx1",
-        "rz1",
-        "rx2",
-        "rz2",
-        "y",
-        "ry",
-        "x1",
-        "z1",
-        "x2",
-        "z2",
-        "rx3",
-        "rz3",
-        "x3",
-        "y3",
-        "z3",
-        "visual",
-        "xp",
-        "yp",
-        "zp",
-    ]
 
 
 class SltBCUU(Device):
@@ -377,16 +244,6 @@ class SltBCUU(Device):
     hc = Cpt(EpicsMotor, "-Ax:HC}Mtr")
     vg = Cpt(EpicsMotor, "-Ax:VG}Mtr")
     vc = Cpt(EpicsMotor, "-Ax:VC}Mtr")
-    _default_read_attrs: ClassVar[list[str]] = [
-        "i",
-        "o",
-        "b",
-        "t",
-        "hg",
-        "hc",
-        "vg",
-        "vc",
-    ]
 
 
 class SltBCUD(Device):
@@ -400,16 +257,6 @@ class SltBCUD(Device):
     hc = Cpt(EpicsMotor, "-Ax:HC}Mtr")
     vg = Cpt(EpicsMotor, "-Ax:VG}Mtr")
     vc = Cpt(EpicsMotor, "-Ax:VC}Mtr")
-    _default_read_attrs: ClassVar[list[str]] = [
-        "i",
-        "o",
-        "b",
-        "t",
-        "hg",
-        "hc",
-        "vg",
-        "vc",
-    ]
 
 
 class Qstar1(Device):
@@ -418,4 +265,3 @@ class Qstar1(Device):
     ax1 = Cpt(EpicsMotor, "-Ax:1}Mtr")
     ax2 = Cpt(EpicsMotor, "-Ax:2}Mtr")
     ax3 = Cpt(EpicsMotor, "-Ax:3}Mtr")
-    _default_read_attrs: ClassVar[list[str]] = ["ax1", "ax2", "ax3"]
