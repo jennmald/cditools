@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 import re
 from collections import defaultdict
 from typing import Any, Callable
@@ -18,8 +17,6 @@ from caproto.server import (  # type: ignore[import-not-found]
     ioc_arg_parser,
     run,
 )
-
-LOGGER = logging.getLogger(__name__)
 
 PLUGIN_TYPE_PVS = [
     (re.compile("image\\d:"), "NDPluginStdArrays"),
@@ -127,29 +124,6 @@ class CDIBlackHoleIOC(PVGroup):
 
 
 def main() -> None:
-    LOGGER.info("""
-*** WARNING ***
-This script spawns an EPICS IOC which responds to ALL caget, caput, camonitor
-requests.  As this is effectively a PV black hole, it may affect the
-performance and functionality of other IOCs on your network.
-
-The script ignores the --interfaces command line argument, always
-binding only to 127.0.0.1, superseding the usual default (0.0.0.0) and any
-user-provided value.
-*** WARNING ***
-
-Press return if you have acknowledged the above, or Ctrl-C to quit.""")
-
-    try:
-        input()
-    except KeyboardInterrupt:
-        LOGGER.info("")
-        return
-    LOGGER.info("""
-
-                         PV blackhole started
-
-""")
     _, run_options = ioc_arg_parser(default_prefix="", desc="PV black hole")
     run_options["interfaces"] = ["127.0.0.1"]
     run(CDIBlackHoleIOC().pvdb, **run_options)
