@@ -37,7 +37,7 @@ EXTERNAL_ENABLE = 3
 class EigerDetectorWithPlugins(EigerDetector):
     hdf5 = ...
 
-class EigerSingleTriggerV26(SingleTrigger, EigerDetectorWithPlugins):
+class EigerSingleTrigger(SingleTrigger, EigerDetectorWithPlugins):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Remove `cam.acquire` since we want to keep the camera acquiring
