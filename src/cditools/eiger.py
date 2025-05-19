@@ -1,182 +1,113 @@
-from __future__ import annotations
-
-import datetime
-import logging
-import os
-import time as ttime
-from collections import OrderedDict, deque
+from datetime import datetime
 from pathlib import PurePath
-from types import SimpleNamespace
+from typing import Any
 
-import h5py
-from ophyd import Component as Cpt
-from ophyd import (
-    Device,
-    EpicsPathSignal,
-    EpicsSignal,
-    ImagePlugin,
-    Signal,
-    SingleTrigger,
-)
-from ophyd.areadetector import EigerDetector
+from ophyd import EpicsSignalRO, ROIPlugin, Device, Component as Cpt, Signal, EigerDetector, StatusBase
 from ophyd.areadetector.base import ADComponent, EpicsSignalWithRBV
-from ophyd.areadetector.filestore_mixins import FileStoreBase  # , new_short_uid
+from ophyd.areadetector.filestore_mixins import FileStoreBase, new_short_uid
+from ophyd.areadetector.trigger_mixins import SingleTrigger
+from ophyd.areadetector.plugins import StatsPlugin, ProcessPlugin, ROIPlugin
 
 
-logger = logging.getLogger(__name__)
+class EigerFileHandler(Device, FileStoreBase):
+    """A device to handle the file writing for the Eiger detector.
 
-DEFAULT_DATUM_DICT = {"data": None, "omega": None}
+    When the Eiger's FileWriter module and SaveFiles are enabled, the file writing is handled
+    by the detector itself. In this case, we want to generate a resource document for the
+    file path and file name pattern. Then, we want to generate a datum for each trigger that
+    enables us to get the individual frames from the file.
 
-# TODO: convert it to Enum class.
-INTERNAL_SERIES = 0
-INTERNAL_ENABLE = 1
-EXTERNAL_SERIES = 2
-EXTERNAL_ENABLE = 3
+    The alternative to this is to use the Stream interface and configure the area detector plugins
+    to write to a file store.
+    """
+    sequence_id = ADComponent(EpicsSignalRO, 'SequenceId')
+    file_path = ADComponent(EpicsSignalWithRBV, 'FilePath', string=True)
+    file_write_name_pattern = ADComponent(EpicsSignalWithRBV, 'FWNamePattern',
+                                          string=True)
+    file_write_images_per_file = ADComponent(EpicsSignalWithRBV,
+                                             'FWNImagesPerFile')
+    current_run_start_uid = Cpt(Signal, value='', add_prefix=())
 
-
-class EigerDetectorWithPlugins(EigerDetector):
-    hdf5 = ...
-
-class EigerSingleTrigger(SingleTrigger, EigerDetectorWithPlugins):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: dict[str, Any]) -> None:
+        self.sequence_id_offset = 1
         super().__init__(*args, **kwargs)
-        # Remove `cam.acquire` since we want to keep the camera acquiring
-        self.stage_sigs.pop("cam.acquire")
-        self.stage_sigs.update(
-            {"cam.compression_algo": "BS LZ4"}
-        )
 
-    def collect_asset_docs(self):
-        asset_docs_cache = []
+        # NOTE: See `FileStoreBase._generate_resource` for the use of these.
+        self._fn = None
+        self.filestore_spec = "AD_EIGER2"
 
-        # Get the Resource which was produced when the detector was staged.
-        ((name, resource),) = self.file.collect_asset_docs()
+    def stage(self) -> list[object]:
+        res_uid = new_short_uid()
+        write_path = datetime.now().strftime(self.write_path_template)
+        self.file_path.set(write_path).wait(1.0)
+        # The name pattern must have `$id` in it.
+        # `$id` is replaced by the current sequence id of the acquisition.
+        # E.g. * <res_uid>_1_master.h5
+        #      * <res_uid>_1_data_000001.h5
+        #      * <res_uid>_1_data_000002.h5
+        #      * ...
+        self.file_write_name_pattern.set(f"{res_uid}_$id").wait(1.0)
 
-        asset_docs_cache.append(("resource", resource))
-        self._datum_ids = DEFAULT_DATUM_DICT
-        # Generate Datum documents from scratch here, because the detector was
-        # triggered externally by the DeltaTau, never by ophyd.
-        resource_uid = resource["uid"]
-        # We are currently generating only one datum document for all frames, that's why
-        #   we use the 0th index below.
-        #
-        # Uncomment & update the line below if more datum documents are needed:
-        # for i in range(num_points):
+        super().stage()
 
-        seq_id = self.cam.sequence_id.get()
+        # Set the filename for the resource document.
+        file_prefix = PurePath(self.file_path.get()) / res_uid
+        self._fn = file_prefix
 
-        self._master_file = (
-            f"{resource['root']}/{resource['resource_path']}_{seq_id}_master.h5"
-        )
-        if not os.path.isfile(self._master_file):
-            raise RuntimeError(f"File {self._master_file} does not exist")
+        images_per_file = self.file_write_images_per_file.get()
+        resource_kwargs = {'images_per_file' : images_per_file}
 
-        # The pseudocode below is from Tom Caswell explaining the relationship between resource, datum, and events.
-        #
-        # resource = {
-        #     "resource_id": "RES",
-        #     "resource_kwargs": {},  # this goes to __init__
-        #     "spec": "AD-EIGER-MX",
-        #     ...: ...,
-        # }
-        # datum = {
-        #     "datum_id": "a",
-        #     "datum_kwargs": {"data_key": "data"},  # this goes to __call__
-        #     "resource": "RES",
-        #     ...: ...,
-        # }
-        # datum = {
-        #     "datum_id": "b",
-        #     "datum_kwargs": {"data_key": "omega"},
-        #     "resource": "RES",
-        #     ...: ...,
-        # }
+        self._generate_resource(resource_kwargs)
 
-        # event = {...: ..., "data": {"detector_img": "a", "omega": "b"}}
+    def generate_datum(self, key: str, timestamp: float, datum_kwargs: dict[str, Any]) -> Any:
+        # The detector keeps its own counter which is uses label HDF5
+        # sub-files.  We access that counter via the sequence_id
+        # signal and stash it in the datum.
+        seq_id = self.sequence_id_offset + self.sequence_id.get()  # det writes to the NEXT one
+        datum_kwargs.update({'seq_id': seq_id})
+        # TODO: Is this needed?
+        if self.frame_num is not None:
+            datum_kwargs.update({'frame_num': self.frame_num})
+        return super().generate_datum(key, timestamp, datum_kwargs)
 
-        for data_key in self._datum_ids.keys():
-            datum_id = f"{resource_uid}/{data_key}"
-            self._datum_ids[data_key] = datum_id
-            datum = {
-                "resource": resource_uid,
-                "datum_id": datum_id,
-                "datum_kwargs": {"data_key": data_key},
-            }
-            asset_docs_cache.append(("datum", datum))
-        return tuple(asset_docs_cache)
 
-    def _extract_metadata(self, field="omega"):
-        with h5py.File(self._master_file, "r") as hf:
-            return hf.get(f"entry/sample/goniometer/{field}")[()]
+class EigerBase(EigerDetector):
+    """Base class for Eiger detectors that have the commonly used plugins."""
+    file_handler = Cpt(EigerFileHandler, "", name="file_handler",
+                       write_path_template="/nsls2/data/tst/legacy/mock-proposals/2025-2/pass-56789/assets/eiger/%Y/%m/%d",
+                       root="/nsls2/data/tst/legacy/mock-proposals/2025-2/pass-56789/assets/eiger")
+    stats1 = Cpt(StatsPlugin, "Stats1:")
+    stats2 = Cpt(StatsPlugin, "Stats2:")
+    stats3 = Cpt(StatsPlugin, "Stats3:")
+    stats4 = Cpt(StatsPlugin, "Stats4:")
+    stats5 = Cpt(StatsPlugin, "Stats5:")
+    roi1 = Cpt(ROIPlugin, "ROI1:")
+    roi2 = Cpt(ROIPlugin, "ROI2:")
+    roi3 = Cpt(ROIPlugin, "ROI3:")
+    roi4 = Cpt(ROIPlugin, "ROI4:")
+    proc1 = Cpt(ProcessPlugin, "Proc1:")
+    
 
-    def unstage(self):
-        ttime.sleep(1.0)
+    def stage(self, *args: Any, **kwargs: dict[str, Any]) -> list[object]:
+        staged_devices = super().stage(*args, **kwargs)
+        self.cam.manual_trigger.set(1).wait(5.0)
+        return staged_devices
+
+    def unstage(self) -> None:
+        self.cam.manual_trigger.set(0).wait(5.0)
         super().unstage()
 
-    def stage(self, *args, **kwargs):
-        return super().stage(*args, **kwargs)
 
-    def trigger(self, *args, **kwargs):
+class EigerSingleTrigger(SingleTrigger, EigerBase):
+    """Eiger detector that uses the single trigger acquisition mode."""
+    def __init__(self, *args: Any, **kwargs: dict[str, Any]) -> None:
+        super().__init__(*args, **kwargs)
+        self.stage_sigs["cam.trigger_mode"] = 0
+    
+    def trigger(self, *args: Any, **kwargs: dict[str, Any]) -> StatusBase:
         status = super().trigger(*args, **kwargs)
-        self.cam.special_trigger_button.set(1)
+        # If the manual trigger is enabled, we need to press the special trigger button
+        # to actually trigger the detector.
+        if self.cam.manual_trigger.get() == 1:
+            self.cam.special_trigger_button.set(1).wait(5.0)
         return status
-
-    def read(self, *args, streaming=False, **kwargs):
-        """
-        This is a test of using streaming read.
-        Ideally, this should be handled by a new _stream_attrs property.
-        For now, we just check for a streaming key in read and
-        call super() if False, or read the one key we know we should read
-        if True.
-
-        Parameters
-        ----------
-        streaming : bool, optional
-            whether to read streaming attrs or not
-        """
-        if streaming:
-            key = self._image_name  # this comes from the SingleTrigger mixin
-            read_dict = super().read()
-            ret = OrderedDict({key: read_dict[key]})
-            return ret
-        ret = super().read(*args, **kwargs)
-        return ret
-
-    def describe(self, *args, streaming=False, **kwargs):
-        """
-        This is a test of using streaming read.
-        Ideally, this should be handled by a new _stream_attrs property.
-        For now, we just check for a streaming key in read and
-        call super() if False, or read the one key we know we should read
-        if True.
-
-        Parameters
-        ----------
-        streaming : bool, optional
-            whether to read streaming attrs or not
-        """
-        if streaming:
-            key = self._image_name  # this comes from the SingleTrigger mixin
-            read_dict = super().describe()
-            ret = OrderedDict({key: read_dict[key]})
-            return ret
-        ret = super().describe(*args, **kwargs)
-        return ret
-
-    def super_unstage(self):
-        super().unstage()
-
-
-def set_eiger_defaults(eiger):
-    """Choose which attributes to read per-step (read_attrs) or
-    per-run (configuration attrs)."""
-
-    eiger.read_attrs = [
-        "file",
-        # 'stats1', 'stats2', 'stats3', 'stats4', 'stats5',
-    ]
-    # for stats in [eiger.stats1, eiger.stats2, eiger.stats3,
-    #               eiger.stats4, eiger.stats5]:
-    #     stats.read_attrs = ['total']
-    eiger.file.read_attrs = []
-    eiger.cam.read_attrs = []
