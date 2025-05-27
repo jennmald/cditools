@@ -1,13 +1,30 @@
-import os
-from datetime import datetime
-from pathlib import PurePath
-from typing import Any, Optional
+from __future__ import annotations
 
-from ophyd import EpicsSignalRO, ROIPlugin, Device, Component as Cpt, Signal, EigerDetector, StatusBase
-from ophyd.areadetector.base import ADComponent, EpicsSignalWithRBV
-from ophyd.areadetector.filestore_mixins import FileStoreBase, new_short_uid
-from ophyd.areadetector.trigger_mixins import SingleTrigger
-from ophyd.areadetector.plugins import StatsPlugin, ProcessPlugin, ROIPlugin
+from datetime import datetime
+from pathlib import Path, PurePath
+from typing import Any
+
+from ophyd import Component as Cpt  # type: ignore[import-not-found]
+from ophyd import (
+    Device,
+    EigerDetector,
+    EpicsSignalRO,
+    ProcessPlugin,
+    ROIPlugin,
+    StatsPlugin,
+    StatusBase,
+)
+from ophyd.areadetector.base import (  # type: ignore[import-not-found]
+    ADComponent,
+    EpicsSignalWithRBV,
+)
+from ophyd.areadetector.filestore_mixins import (  # type: ignore[import-not-found]
+    FileStoreBase,
+    new_short_uid,
+)
+from ophyd.areadetector.trigger_mixins import (  # type: ignore[import-not-found]
+    SingleTrigger,
+)
 
 
 class EigerFileHandler(Device, FileStoreBase):
@@ -21,12 +38,13 @@ class EigerFileHandler(Device, FileStoreBase):
     The alternative to this is to use the Stream interface and configure the area detector plugins
     to write to a file store.
     """
+
     sequence_id = ADComponent(EpicsSignalRO, "SequenceId")
     file_path = ADComponent(EpicsSignalWithRBV, "FilePath", string=True)
-    file_write_name_pattern = ADComponent(EpicsSignalWithRBV, "FWNamePattern",
-                                          string=True)
-    file_write_images_per_file = ADComponent(EpicsSignalWithRBV,
-                                             "FWNImagesPerFile")
+    file_write_name_pattern = ADComponent(
+        EpicsSignalWithRBV, "FWNamePattern", string=True
+    )
+    file_write_images_per_file = ADComponent(EpicsSignalWithRBV, "FWNImagesPerFile")
     enable = Cpt(EpicsSignalWithRBV, "FWEnable")
     data_source = Cpt(EpicsSignalWithRBV, "DataSource", string=True)
     save_files = Cpt(EpicsSignalWithRBV, "SaveFiles")
@@ -43,18 +61,19 @@ class EigerFileHandler(Device, FileStoreBase):
     @property
     def master_file_paths(self) -> list[PurePath]:
         if len(self._master_file_paths) == 0:
-            raise ValueError("Master file path has not been set. Call stage() first.")
+            msg = "Master file path has not been set. Call stage() first."
+            raise ValueError(msg)
         return self._master_file_paths
 
     @property
     def sequence_number(self) -> int:
-        return self.sequence_id_offset + self.sequence_id.get()
+        return self.sequence_id_offset + int(self.sequence_id.get())
 
     def stage(self) -> list[object]:
         res_uid = new_short_uid()
-        write_path = f"{datetime.now().strftime(self.write_path_template)}/"
-        self.file_path.set(write_path).wait(1.0)
-        
+        write_path = Path(f"{datetime.now().strftime(self.write_path_template)}/")
+        self.file_path.set(write_path.as_posix()).wait(1.0)
+
         # The name pattern must have `$id` in it.
         # `$id` is replaced by the current sequence id of the acquisition.
         # E.g. * <res_uid>_1_master.h5
@@ -63,41 +82,54 @@ class EigerFileHandler(Device, FileStoreBase):
         #      * ...
         self.file_write_name_pattern.set(f"{res_uid}_$id").wait(1.0)
 
-        super().stage()
+        ret: list[object] = super().stage()
 
         # Set the filename for the resource document.
         file_prefix = PurePath(self.file_path.get()) / res_uid
         self._fn = file_prefix
 
         images_per_file = self.file_write_images_per_file.get()
-        resource_kwargs = {'images_per_file' : images_per_file}
+        resource_kwargs = {"images_per_file": images_per_file}
 
         self._generate_resource(resource_kwargs)
 
         # Validate that the root path exists
-        if not os.path.exists(self.reg_root):
-            raise FileNotFoundError(f"Root path {self.reg_root} does not exist")
-            
-        # Create the templated part of the path
-        if not os.path.exists(write_path):
-            os.makedirs(write_path)
+        if not Path.exists(Path(self.reg_root)):
+            msg = f"Root path {self.reg_root} does not exist"
+            raise FileNotFoundError(msg)
 
+        # Create the templated part of the path
+        if not Path.exists(write_path):
+            Path.mkdir(write_path, parents=True)
+
+        # Reset the list of master file paths
         self._master_file_paths = []
 
-    def generate_datum(self, key: str, timestamp: float, datum_kwargs: dict[str, Any]) -> Any:
+        return ret
+
+    def generate_datum(
+        self, key: str, timestamp: float, datum_kwargs: dict[str, Any]
+    ) -> Any:
         # The detector keeps its own counter which is uses label HDF5
         # sub-files.  We access that counter via the sequence_id
         # signal and stash it in the datum.
-        datum_kwargs.update({'seq_id': self.sequence_number})
-        self._master_file_paths.append(f"{self._fn}_{self.sequence_number}_master.h5")
+        datum_kwargs.update({"seq_id": self.sequence_number})
+        self._master_file_paths.append(
+            PurePath(f"{self._fn}_{self.sequence_number}_master.h5")
+        )
         return super().generate_datum(key, timestamp, datum_kwargs)
 
 
 class EigerBase(EigerDetector):
     """Base class for Eiger detectors that have the commonly used plugins."""
-    file_handler = Cpt(EigerFileHandler, "cam1:", name="file_handler",
-                       write_path_template="/nsls2/data/tst/legacy/mock-proposals/2025-2/pass-56789/assets/eiger/%Y/%m/%d",
-                       root="/nsls2/data/tst/legacy/mock-proposals/2025-2/pass-56789/assets/eiger")
+
+    file_handler = Cpt(
+        EigerFileHandler,
+        "cam1:",
+        name="file_handler",
+        write_path_template="/nsls2/data/tst/legacy/mock-proposals/2025-2/pass-56789/assets/eiger/%Y/%m/%d",
+        root="/nsls2/data/tst/legacy/mock-proposals/2025-2/pass-56789/assets/eiger",
+    )
     stats1 = Cpt(StatsPlugin, "Stats1:")
     stats2 = Cpt(StatsPlugin, "Stats2:")
     stats3 = Cpt(StatsPlugin, "Stats3:")
@@ -108,26 +140,28 @@ class EigerBase(EigerDetector):
     roi3 = Cpt(ROIPlugin, "ROI3:")
     roi4 = Cpt(ROIPlugin, "ROI4:")
     proc1 = Cpt(ProcessPlugin, "Proc1:")
-    
 
     def stage(self, *args: Any, **kwargs: dict[str, Any]) -> list[object]:
-        staged_devices = super().stage(*args, **kwargs)
+        staged_devices: list[object] = super().stage(*args, **kwargs)
         self.cam.manual_trigger.set(True).wait(5.0)
         file_write_path = self.file_handler.file_path.get()
-        if not os.path.exists(file_write_path):
-            raise FileNotFoundError(f"Path {file_write_path} does not exist.")
+        if not Path.exists(file_write_path):
+            msg = f"Path {file_write_path} does not exist."
+            raise FileNotFoundError(msg)
         return staged_devices
 
     def unstage(self) -> None:
         self.cam.manual_trigger.set(False).wait(5.0)
         super().unstage()
 
-        if not all(os.path.exists(path) for path in self.file_handler.master_file_paths):
-            raise FileNotFoundError(f"Paths {self.file_handler.master_file_paths} were not written.")
+        if not all(Path.exists(path) for path in self.file_handler.master_file_paths):
+            msg = f"Paths {self.file_handler.master_file_paths} were not written."
+            raise FileNotFoundError(msg)
 
 
 class EigerSingleTrigger(SingleTrigger, EigerBase):
     """Eiger detector that uses the single trigger acquisition mode."""
+
     def __init__(self, *args: Any, **kwargs: dict[str, Any]) -> None:
         super().__init__(*args, **kwargs)
         self.stage_sigs["cam.trigger_mode"] = 0
