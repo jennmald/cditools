@@ -1,11 +1,4 @@
-<<<<<<< HEAD
 from __future__ import annotations
-=======
-import os
-from datetime import datetime
-from pathlib import PurePath
-from typing import Any, Optional
->>>>>>> c849837 (Check for mutliple master files for each datum)
 
 from datetime import datetime
 from pathlib import Path, PurePath
@@ -68,12 +61,13 @@ class EigerFileHandler(Device, FileStoreBase):
     @property
     def master_file_paths(self) -> list[PurePath]:
         if len(self._master_file_paths) == 0:
-            raise ValueError("Master file path has not been set. Call stage() first.")
+            msg = "Master file path has not been set. Call stage() first."
+            raise ValueError(msg)
         return self._master_file_paths
 
     @property
     def sequence_number(self) -> int:
-        return self.sequence_id_offset + self.sequence_id.get()
+        return self.sequence_id_offset + int(self.sequence_id.get())
 
     @property
     def master_file_paths(self) -> list[PurePath]:
@@ -88,15 +82,9 @@ class EigerFileHandler(Device, FileStoreBase):
 
     def stage(self) -> list[object]:  # type: ignore[reportIncompatibleMethodOverride]
         res_uid = new_short_uid()
-<<<<<<< HEAD
         write_path = Path(f"{datetime.now().strftime(self.write_path_template)}/")
         self.file_path.set(write_path.as_posix()).wait(1.0)
 
-=======
-        write_path = f"{datetime.now().strftime(self.write_path_template)}/"
-        self.file_path.set(write_path).wait(1.0)
-        
->>>>>>> c849837 (Check for mutliple master files for each datum)
         # The name pattern must have `$id` in it.
         # `$id` is replaced by the current sequence id of the acquisition.
         # E.g. * <res_uid>_1_master.h5
@@ -111,13 +99,12 @@ class EigerFileHandler(Device, FileStoreBase):
         file_prefix = PurePath(self.file_path.get()) / res_uid
         self._fn = file_prefix
 
-        images_per_file: str = self.file_write_images_per_file.get()
-        resource_kwargs: dict[str, str] = {"images_per_file": images_per_file}
+        images_per_file = self.file_write_images_per_file.get()
+        resource_kwargs = {"images_per_file": images_per_file}
 
         self._generate_resource(resource_kwargs)
 
         # Validate that the root path exists
-<<<<<<< HEAD
         if not Path.exists(Path(self.reg_root)):
             msg = f"Root path {self.reg_root} does not exist"
             raise FileNotFoundError(msg)
@@ -141,29 +128,11 @@ class EigerFileHandler(Device, FileStoreBase):
         self._master_file_paths.append(
             PurePath(f"{self._fn}_{self.sequence_number}_master.h5")
         )
-=======
-        if not os.path.exists(self.reg_root):
-            raise FileNotFoundError(f"Root path {self.reg_root} does not exist")
-            
-        # Create the templated part of the path
-        if not os.path.exists(write_path):
-            os.makedirs(write_path)
-
-        self._master_file_paths = []
-
-    def generate_datum(self, key: str, timestamp: float, datum_kwargs: dict[str, Any]) -> Any:
-        # The detector keeps its own counter which is uses label HDF5
-        # sub-files.  We access that counter via the sequence_id
-        # signal and stash it in the datum.
-        datum_kwargs.update({'seq_id': self.sequence_number})
-        self._master_file_paths.append(f"{self._fn}_{self.sequence_number}_master.h5")
->>>>>>> c849837 (Check for mutliple master files for each datum)
         return super().generate_datum(key, timestamp, datum_kwargs)
 
 
 class EigerBase(EigerDetector):
     """Base class for Eiger detectors that have the commonly used plugins."""
-<<<<<<< HEAD
 
     file_handler = Cpt(
         EigerFileHandler,
@@ -173,11 +142,6 @@ class EigerBase(EigerDetector):
         write_path_template="/nsls2/data/tst/legacy/mock-proposals/2025-2/pass-56789/assets/eiger/%Y/%m/%d",
         root="/nsls2/data/tst/legacy/mock-proposals/2025-2/pass-56789/assets/eiger",
     )
-=======
-    file_handler = Cpt(EigerFileHandler, "cam1:", name="file_handler",
-                       write_path_template="/nsls2/data/tst/legacy/mock-proposals/2025-2/pass-56789/assets/eiger/%Y/%m/%d",
-                       root="/nsls2/data/tst/legacy/mock-proposals/2025-2/pass-56789/assets/eiger")
->>>>>>> c849837 (Check for mutliple master files for each datum)
     stats1 = Cpt(StatsPlugin, "Stats1:")
     stats2 = Cpt(StatsPlugin, "Stats2:")
     stats3 = Cpt(StatsPlugin, "Stats3:")
@@ -190,7 +154,6 @@ class EigerBase(EigerDetector):
     proc1 = Cpt(ProcessPlugin, "Proc1:")
 
     def stage(self, *args: Any, **kwargs: dict[str, Any]) -> list[object]:
-<<<<<<< HEAD
         staged_devices: list[object] = super().stage(*args, **kwargs)
         self.cam.manual_trigger.set(True).wait(5.0)
         file_write_path: Path = Path(cast(str, self.file_handler.file_path.get()))
@@ -207,22 +170,7 @@ class EigerBase(EigerDetector):
             msg = f"Paths {self.file_handler.master_file_paths} were not written."
             raise FileNotFoundError(msg)
         return ret
-=======
-        staged_devices = super().stage(*args, **kwargs)
-        self.cam.manual_trigger.set(True).wait(5.0)
-        file_write_path = self.file_handler.file_path.get()
-        if not os.path.exists(file_write_path):
-            raise FileNotFoundError(f"Path {file_write_path} does not exist.")
-        return staged_devices
-
-    def unstage(self) -> None:
-        self.cam.manual_trigger.set(False).wait(5.0)
-        super().unstage()
->>>>>>> c849837 (Check for mutliple master files for each datum)
-
-        if not all(os.path.exists(path) for path in self.file_handler.master_file_paths):
-            raise FileNotFoundError(f"Paths {self.file_handler.master_file_paths} were not written.")
-
+    
 
 class EigerSingleTrigger(SingleTrigger, EigerBase):  # type: ignore[reportIncompatibleMethodOverride]
     """Eiger detector that uses the single trigger acquisition mode."""
@@ -234,11 +182,7 @@ class EigerSingleTrigger(SingleTrigger, EigerBase):  # type: ignore[reportIncomp
         self.stage_sigs["file_handler.enable"] = True
         self.stage_sigs["file_handler.save_files"] = True
 
-<<<<<<< HEAD
     def trigger(self, *args: Any, **kwargs: dict[str, Any]) -> ADTriggerStatus:
-=======
-    def trigger(self, *args: Any, **kwargs: dict[str, Any]) -> StatusBase:
->>>>>>> c849837 (Check for mutliple master files for each datum)
         status = super().trigger(*args, **kwargs)
         # If the manual trigger is enabled, we need to press the special trigger button
         # to actually trigger the detector.
