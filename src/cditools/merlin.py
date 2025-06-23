@@ -90,7 +90,7 @@ class HDF5PluginWithFileStore(HDF5Plugin, MerlinFileStoreHDF5):
         return super().stage()
 
 
-class CDIMerlinDetector(HxnModalTrigger, MerlinDetector):
+class CDIMerlinDetector(CDIModalTrigger, MerlinDetector):
     hdf5 = Cpt(HDF5PluginWithFileStore, 'HDF1:',
                read_attrs=[],
                configuration_attrs=[],

@@ -12,8 +12,59 @@ from .utils import ordered_dict_move_to_beginning
 
 logger = logging.getLogger(__name__)
 
+class TriggerBase(BlueskyInterface):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-class CDIModalTrigger(HxnModalBase, TriggerBase):
+        # If acquiring, stop.
+        self.stage_sigs[self.cam.acquire] = 0
+        self.stage_sigs[self.cam.image_mode] = 'Multiple'
+        self._acquisition_signal = self.cam.acquire
+
+        self._status = None
+
+class CDIModalBase(Device):
+    mode_settings = Cpt(HxnModalSettings, '')
+    count_time = Cpt(Signal, value=1.0,
+                     doc='Exposure/count time, as specified by bluesky')
+
+    def mode_setup(self, mode):
+        devices = [self] + [getattr(self, attr) for attr in self._sub_devices]
+        attr = 'mode_{}'.format(mode)
+        for dev in devices:
+            if hasattr(dev, attr):
+                mode_setup_method = getattr(dev, attr)
+                mode_setup_method()
+
+    def mode_internal(self):
+        logger.debug('%s internal triggering %s', self.name,
+                     self.mode_settings.get())
+
+    def mode_external(self):
+        logger.debug('%s external triggering %s', self.name,
+                     self.mode_settings.get())
+
+    @property
+    def mode(self):
+        '''Trigger mode (external/internal)'''
+        return self.mode_settings.mode.get()
+
+    def stage(self):
+        if self._staged != Staged.yes:
+            self.mode_setup(self.mode)
+
+        return super().stage()
+
+    def unstage(self):
+        if self.mode == 'external':
+            logger.info('[Unstage] Stopping externally-triggered detector %s',
+                         self.name)
+            self.stop(success=True)
+
+        super().unstage()
+
+
+class CDIModalTrigger(CDIModalBase, TriggerBase):
     def __init__(self, *args, image_name=None, **kwargs):
         super().__init__(*args, **kwargs)
         if image_name is None:
