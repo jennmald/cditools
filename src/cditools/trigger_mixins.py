@@ -23,6 +23,18 @@ class TriggerBase(BlueskyInterface):
 
         self._status = None
 
+class CDIModalSettings(Device):
+    mode = Cpt(Signal, value='internal',
+               doc='Triggering mode (internal/external)')
+    scan_type = Cpt(Signal, value='step',
+                    doc='Scan type (step/fly)')
+    make_directories = Cpt(Signal, value=True,
+                           doc='Make directories on the DAQ side')
+    total_points = Cpt(Signal, value=2,
+                       doc='The total number of points to acquire overall')
+    triggers = Cpt(Signal, value=None,
+                   doc='Detector instances which this one triggers')
+
 class CDIModalBase(Device):
     mode_settings = Cpt(CDIModalSettings, '')
     count_time = Cpt(Signal, value=1.0,
