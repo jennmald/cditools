@@ -24,7 +24,7 @@ class TriggerBase(BlueskyInterface):
         self._status = None
 
 class CDIModalBase(Device):
-    mode_settings = Cpt(HxnModalSettings, '')
+    mode_settings = Cpt(CDIModalSettings, '')
     count_time = Cpt(Signal, value=1.0,
                      doc='Exposure/count time, as specified by bluesky')
 
