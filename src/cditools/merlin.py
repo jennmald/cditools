@@ -94,8 +94,8 @@ class CDIMerlinDetector(CDIModalTrigger, MerlinDetector):
     hdf5 = Cpt(HDF5PluginWithFileStore, 'HDF1:',
                read_attrs=[],
                configuration_attrs=[],
-               write_path_template='/data/%Y/%m/%d/',
-               root='/data')
+               write_path_template='/nsls2/data/tst/legacy/mock-proposals/2025-2/pass-56789/assets/merlin/%Y/%m/%d',
+               root='/nsls2/data/tst/legacy/mock-proposals/2025-2/pass-56789/assets/merlin',)
 
     proc1 = Cpt(ProcessPlugin, 'Proc1:')
     stats1 = Cpt(StatsPlugin, 'Stats1:')
