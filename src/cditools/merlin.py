@@ -1,6 +1,5 @@
 from __future__ import print_function
 import logging
-from pathlib import PurePath
 from ophyd import (AreaDetector, CamBase, TIFFPlugin, Component as Cpt,
                    HDF5Plugin, Device, StatsPlugin, ProcessPlugin,
                    ROIPlugin, TransformPlugin, EpicsSignal)
@@ -34,10 +33,7 @@ class MerlinTiffPlugin(TIFFPlugin, FileStoreBulkReadable, FileStoreTIFF,
         ret = super().describe()
         key = self.parent._image_name
         cam_dtype = self.parent.cam.data_type.get(as_string=True)
-        print(cam_dtype)
-        type_map = {'UInt8': '|u1', 'UInt16': '<u2', 'Float32':'<f4', "Float64":'<f8'}
-        if cam_dtype in type_map:
-            ret[key].setdefault('dtype_str', type_map[cam_dtype])
+        ret[key].setdefault('dtype_str', '<u2')
         return ret
 
 
@@ -85,10 +81,7 @@ class MerlinFileStoreHDF5(FileStorePluginBase, FileStoreBulkReadable):
         ret = super().describe()
         key = self.parent._image_name
         cam_dtype = self.parent.cam.data_type.get(as_string=True)
-        print(cam_dtype)
-        type_map = {'UInt8': '|u1', 'UInt16': '<u2', 'Float32':'<f4', "Float64":'<f8'}
-        if cam_dtype in type_map:
-            ret[key].setdefault('dtype_str', type_map[cam_dtype])
+        ret[key].setdefault('dtype_str', '<u2')
         return ret
 
     def make_filename(self):
@@ -113,14 +106,9 @@ class HDF5PluginWithFileStore(HDF5Plugin, MerlinFileStoreHDF5):
         ret = super().describe()
         key = self.parent._image_name
         cam_dtype = self.parent.cam.data_type.get(as_string=True)
-        print(cam_dtype)
-        type_map = {'UInt8': '|u1', 'UInt16': '<u2', 'Float32':'<f4', "Float64":'<f8'}
-        if cam_dtype in type_map:
-            ret[key].setdefault('dtype_str', type_map[cam_dtype])
+        ret[key].setdefault('dtype_str', '<u2')
         return ret
     
-    
-
 
 class CDIMerlinDetector(CDIModalTrigger, MerlinDetector):
     hdf5 = Cpt(HDF5PluginWithFileStore, 'HDF1:',
