@@ -32,7 +32,6 @@ class MerlinTiffPlugin(TIFFPlugin, FileStoreBulkReadable, FileStoreTIFF,
     def describe(self):
         ret = super().describe()
         key = self.parent._image_name
-        cam_dtype = self.parent.cam.data_type.get(as_string=True)
         ret[key].setdefault('dtype_str', '<u2')
         return ret
 
@@ -80,7 +79,6 @@ class MerlinFileStoreHDF5(FileStorePluginBase, FileStoreBulkReadable):
     def describe(self):
         ret = super().describe()
         key = self.parent._image_name
-        cam_dtype = self.parent.cam.data_type.get(as_string=True)
         ret[key].setdefault('dtype_str', '<u2')
         return ret
 
@@ -105,7 +103,6 @@ class HDF5PluginWithFileStore(HDF5Plugin, MerlinFileStoreHDF5):
     def describe(self):
         ret = super().describe()
         key = self.parent._image_name
-        cam_dtype = self.parent.cam.data_type.get(as_string=True)
         ret[key].setdefault('dtype_str', '<u2')
         return ret
     
