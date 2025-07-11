@@ -3,7 +3,7 @@ from __future__ import annotations
 import itertools
 import logging
 import time as ttime
-from typing import Any, Optional
+from typing import Any
 
 from ophyd import (
     Signal,
@@ -81,9 +81,7 @@ class CDIModalBase(Device):
 
 
 class CDIModalTrigger(CDIModalBase, TriggerBase):
-    def __init__(
-        self, *args: object, image_name: Optional[str] = None, **kwargs: object
-    ):
+    def __init__(self, *args: object, image_name: str | None = None, **kwargs: object):
         super().__init__(*args, **kwargs)
         if image_name is None:
             image_name = "_".join([self.name, "image"])

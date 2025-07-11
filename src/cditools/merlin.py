@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
 from ophyd import (
     AreaDetector,
@@ -149,8 +148,8 @@ class CDIMerlinDetector(CDIModalTrigger, MerlinDetector):
         self,
         prefix,
         *,
-        read_attrs: Optional[list[str]] = None,
-        configuration_attrs: Optional[list[str]] = None,
+        read_attrs: list[str] | None = None,
+        configuration_attrs: list[str] | None = None,
         **kwargs,
     ):
         if read_attrs is None:
