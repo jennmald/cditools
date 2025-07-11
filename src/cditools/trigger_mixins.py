@@ -153,7 +153,8 @@ class CDIModalTrigger(CDIModalBase, TriggerBase):
             raise RuntimeError(msg)
 
         self._status = DeviceStatus(self)
-        self._status._finished()
+        if self._status is not None:
+            self._status._finished()
         # TODO this timestamp is inaccurate!
         if self.mode_settings.scan_type.get() != "fly":
             # Don't dispatch images for fly-scans - they are bulk read at the end
