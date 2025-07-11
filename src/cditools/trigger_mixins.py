@@ -3,6 +3,7 @@ from __future__ import annotations
 import itertools
 import logging
 import time as ttime
+from typing import Optional
 
 from ophyd import (
     Signal,
@@ -17,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 class TriggerBase(BlueskyInterface):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: object, **kwargs: object) -> None:
         super().__init__(*args, **kwargs)
 
         # If acquiring, stop.
@@ -44,7 +45,7 @@ class CDIModalBase(Device):
         Signal, value=1.0, doc="Exposure/count time, as specified by bluesky"
     )
 
-    def mode_setup(self, mode):
+    def mode_setup(self, mode: str) -> None:
         devices = [self] + [getattr(self, attr) for attr in self._sub_devices]
         attr = f"mode_{mode}"
         for dev in devices:
@@ -52,24 +53,24 @@ class CDIModalBase(Device):
                 mode_setup_method = getattr(dev, attr)
                 mode_setup_method()
 
-    def mode_internal(self):
+    def mode_internal(self) -> None:
         logger.debug("%s internal triggering %s", self.name, self.mode_settings.get())
 
-    def mode_external(self):
+    def mode_external(self) -> None:
         logger.debug("%s external triggering %s", self.name, self.mode_settings.get())
 
     @property
-    def mode(self):
+    def mode(self) -> str:
         """Trigger mode (external/internal)"""
         return self.mode_settings.mode.get()
 
-    def stage(self):
+    def stage(self) -> object:
         if self._staged != Staged.yes:
             self.mode_setup(self.mode)
 
         return super().stage()
 
-    def unstage(self):
+    def unstage(self) -> None:
         if self.mode == "external":
             logger.info(
                 "[Unstage] Stopping externally-triggered detector %s", self.name
@@ -80,19 +81,21 @@ class CDIModalBase(Device):
 
 
 class CDIModalTrigger(CDIModalBase, TriggerBase):
-    def __init__(self, *args, image_name=None, **kwargs):
+    def __init__(
+        self, *args: object, image_name: Optional[str] = None, **kwargs: object
+    ):
         super().__init__(*args, **kwargs)
         if image_name is None:
             image_name = "_".join([self.name, "image"])
         self._image_name = image_name
         self._external_acquire_at_stage = True
 
-    def stop(self, success=False):
+    def stop(self, success=False) -> None:
         ret = super().stop(success=success)
         self._acquisition_signal.put(0, wait=True)
         return ret
 
-    def mode_internal(self):
+    def mode_internal(self) -> None:
         super().mode_internal()
 
         cam = self.cam
@@ -103,7 +106,7 @@ class CDIModalTrigger(CDIModalBase, TriggerBase):
         cam.stage_sigs[cam.image_mode] = "Single"
         cam.stage_sigs[cam.trigger_mode] = "Internal"
 
-    def mode_external(self):
+    def mode_external(self) -> None:
         super().mode_external()
         total_points = self.mode_settings.total_points.get()
 
@@ -112,7 +115,7 @@ class CDIModalTrigger(CDIModalBase, TriggerBase):
         cam.stage_sigs[cam.image_mode] = "Multiple"
         cam.stage_sigs[cam.trigger_mode] = "External"
 
-    def stage(self):
+    def stage(self) -> object:
         self._acquisition_signal.subscribe(self._acquire_changed)
         staged = super().stage()
 
@@ -122,13 +125,13 @@ class CDIModalTrigger(CDIModalBase, TriggerBase):
             self._acquisition_signal.put(1, wait=False)
         return staged
 
-    def unstage(self):
+    def unstage(self) -> object:
         try:
             return super().unstage()
         finally:
             self._acquisition_signal.clear_sub(self._acquire_changed)
 
-    def trigger_internal(self):
+    def trigger_internal(self) -> DeviceStatus:
         if self._staged != Staged.yes:
             msg = (
                 "This detector is not ready to trigger."
@@ -141,7 +144,7 @@ class CDIModalTrigger(CDIModalBase, TriggerBase):
         self.dispatch(self._image_name, ttime.time())
         return self._status
 
-    def trigger_external(self):
+    def trigger_external(self) -> DeviceStatus:
         if self._staged != Staged.yes:
             msg = (
                 "This detector is not ready to trigger."
@@ -161,7 +164,7 @@ class CDIModalTrigger(CDIModalBase, TriggerBase):
         mode_trigger = getattr(self, f"trigger_{self.mode}")
         return mode_trigger()
 
-    def _acquire_changed(self, value=None, old_value=None):
+    def _acquire_changed(self, value=None, old_value=None) -> None:
         """This is called when the 'acquire' signal changes."""
         if self._status is None:
             return
@@ -171,7 +174,7 @@ class CDIModalTrigger(CDIModalBase, TriggerBase):
 
 
 class FileStoreBulkReadable(FileStoreIterativeWrite):
-    def _reset_data(self):
+    def _reset_data(self) -> None:
         self._datum_uids.clear()
         self._point_counter = itertools.count()
 

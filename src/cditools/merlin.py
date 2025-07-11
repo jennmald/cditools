@@ -26,17 +26,17 @@ logger = logging.getLogger(__name__)
 
 
 class MerlinTiffPlugin(TIFFPlugin, FileStoreBulkReadable, FileStoreTIFF, Device):
-    def mode_external(self):
+    def mode_external(self) -> None:
         total_points = self.parent.mode_settings.total_points.get()
         self.stage_sigs[self.num_capture] = total_points
 
-    def get_frames_per_point(self):
+    def get_frames_per_point(self) -> object:
         mode = self.parent.mode_settings.mode.get()
         if mode == "external":
             return 1
         return self.parent.cam.num_images.get()
 
-    def describe(self):
+    def describe(self) -> object:
         ret = super().describe()
         key = self.parent._image_name
         ret[key].setdefault("dtype_str", "<u2")
@@ -66,7 +66,7 @@ class MerlinFileStoreHDF5(FileStorePluginBase, FileStoreBulkReadable):
     _spec = "TPX_HDF5"
     filestore_spec = _spec
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.stage_sigs.update(
             [
@@ -77,7 +77,7 @@ class MerlinFileStoreHDF5(FileStorePluginBase, FileStoreBulkReadable):
             ]
         )
 
-    def stage(self):
+    def stage(self) -> object:
         logger.info("Staging")
         staged = super().stage()
         logger.info("Staging step 2")
@@ -91,13 +91,13 @@ class MerlinFileStoreHDF5(FileStorePluginBase, FileStoreBulkReadable):
         logger.info("Staged")
         return staged
 
-    def describe(self):
+    def describe(self) -> dict[str, dict]:
         ret = super().describe()
         key = self.parent._image_name
         ret[key].setdefault("dtype_str", "<u2")
         return ret
 
-    def make_filename(self):
+    def make_filename(self) -> tuple[str, str, str]:
         fn, read_path, write_path = super().make_filename()
         mode_settings = self.parent.mode_settings
         if mode_settings.make_directories.get():
@@ -106,7 +106,7 @@ class MerlinFileStoreHDF5(FileStorePluginBase, FileStoreBulkReadable):
 
 
 class HDF5PluginWithFileStore(HDF5Plugin, MerlinFileStoreHDF5):
-    def stage(self):
+    def stage(self) -> object:
         mode_settings = self.parent.mode_settings
         total_points = mode_settings.total_points.get()
         self.stage_sigs[self.num_capture] = total_points
@@ -144,7 +144,14 @@ class CDIMerlinDetector(CDIModalTrigger, MerlinDetector):
     roi3 = Cpt(ROIPlugin, "ROI3:")
     roi4 = Cpt(ROIPlugin, "ROI4:")
 
-    def __init__(self, prefix, *, read_attrs=None, configuration_attrs=None, **kwargs):
+    def __init__(
+        self,
+        prefix,
+        *,
+        read_attrs: list[str] = None,
+        configuration_attrs: list[str] = None,
+        **kwargs,
+    ):
         if read_attrs is None:
             read_attrs = ["hdf5", "cam"]
         if configuration_attrs is None:
@@ -161,7 +168,7 @@ class CDIMerlinDetector(CDIModalTrigger, MerlinDetector):
             **kwargs,
         )
 
-    def mode_internal(self):
+    def mode_internal(self) -> None:
         super().mode_internal()
 
         count_time = self.count_time.get()
@@ -169,7 +176,7 @@ class CDIMerlinDetector(CDIModalTrigger, MerlinDetector):
             self.stage_sigs[self.cam.acquire_time] = count_time
             self.stage_sigs[self.cam.acquire_period] = count_time + 0.005
 
-    def mode_external(self):
+    def mode_external(self) -> None:
         super().mode_external()
 
         # NOTE: these values specify a debounce time for external triggering so
