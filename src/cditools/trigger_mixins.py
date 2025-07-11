@@ -3,7 +3,7 @@ from __future__ import annotations
 import itertools
 import logging
 import time as ttime
-from typing import Optional
+from typing import Any, Optional
 
 from ophyd import (
     Signal,
@@ -70,7 +70,7 @@ class CDIModalBase(Device):
 
         return super().stage()
 
-    def unstage(self) -> None:
+    def unstage(self) -> Any:
         if self.mode == "external":
             logger.info(
                 "[Unstage] Stopping externally-triggered detector %s", self.name
