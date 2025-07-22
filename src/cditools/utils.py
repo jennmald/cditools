@@ -12,7 +12,7 @@ def makedirs(path: str, mode: int = 0o777) -> list[str]:
     if not path or Path(path).exists():
         return []
 
-    head, tail = os.path.split(path)
+    head, _ = os.path.split(path)
     ret = makedirs(head, mode)
     try:
         Path(path).mkdir()
