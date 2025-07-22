@@ -170,7 +170,7 @@ class EigerBase(EigerDetector):
             msg = f"Paths {self.file_handler.master_file_paths} were not written."
             raise FileNotFoundError(msg)
         return ret
-    
+
 
 class EigerSingleTrigger(SingleTrigger, EigerBase):  # type: ignore[reportIncompatibleMethodOverride]
     """Eiger detector that uses the single trigger acquisition mode."""
