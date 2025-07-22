@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from collections import OrderedDict
 
 from ophyd import (
     AreaDetector,
@@ -27,19 +28,19 @@ logger = logging.getLogger(__name__)
 
 class MerlinTiffPlugin(TIFFPlugin, FileStoreBulkReadable, FileStoreTIFF, Device):
     def mode_external(self) -> None:
-        total_points = self.parent.mode_settings.total_points.get()
+        total_points = self.parent.mode_settings.total_points.get()  # type: ignore[union-attr]
         self.stage_sigs[self.num_capture] = total_points
 
     def get_frames_per_point(self) -> object:
-        mode = self.parent.mode_settings.mode.get()
+        mode = self.parent.mode_settings.mode.get()  # type: ignore[union-attr]
         if mode == "external":
             return 1
-        return self.parent.cam.num_images.get()
+        return self.parent.cam.num_images.get()  # type: ignore[union-attr]
 
     def describe(self) -> object:
         ret = super().describe()
-        key = self.parent._image_name
-        ret[key].setdefault("dtype_str", "<u2")
+        key = self.parent._image_name  # type: ignore[union-attr]
+        ret[key].setdefault("dtype_str", "<u2")  # type: ignore[attr-defined]
         return ret
 
 
@@ -70,10 +71,10 @@ class MerlinFileStoreHDF5(FileStorePluginBase, FileStoreBulkReadable):
         super().__init__(*args, **kwargs)
         self.stage_sigs.update(
             [
-                (self.file_template, "%s%s_%6.6d.h5"),
-                (self.file_write_mode, "Stream"),
-                (self.compression, "zlib"),
-                (self.capture, 1),
+                (self.file_template, "%s%s_%6.6d.h5"),  # type: ignore[attr-defined]
+                (self.file_write_mode, "Stream"),  # type: ignore[attr-defined]
+                (self.compression, "zlib"),  # type: ignore[attr-defined]
+                (self.capture, 1),  # type: ignore[attr-defined]
             ]
         )
 
@@ -91,15 +92,15 @@ class MerlinFileStoreHDF5(FileStorePluginBase, FileStoreBulkReadable):
         logger.info("Staged")
         return staged
 
-    def describe(self) -> dict[str, dict]:
+    def describe(self) -> OrderedDict[str, dict]:
         ret = super().describe()
-        key = self.parent._image_name
-        ret[key].setdefault("dtype_str", "<u2")
-        return ret
+        key = self.parent._image_name  # type: ignore[union-attr]
+        ret[key].setdefault("dtype_str", "<u2")  # type: ignore[attr-defined]
+        return ret  # type: ignore[return-value]
 
     def make_filename(self) -> tuple[str, str, str]:
         fn, read_path, write_path = super().make_filename()
-        mode_settings = self.parent.mode_settings
+        mode_settings = self.parent.mode_settings  # type: ignore[union-attr]
         if mode_settings.make_directories.get():
             makedirs(read_path)
         return fn, read_path, write_path
@@ -107,7 +108,7 @@ class MerlinFileStoreHDF5(FileStorePluginBase, FileStoreBulkReadable):
 
 class HDF5PluginWithFileStore(HDF5Plugin, MerlinFileStoreHDF5):
     def stage(self) -> object:
-        mode_settings = self.parent.mode_settings
+        mode_settings = self.parent.mode_settings  # type: ignore[union-attr]
         total_points = mode_settings.total_points.get()
         self.stage_sigs[self.num_capture] = total_points
 
@@ -117,8 +118,8 @@ class HDF5PluginWithFileStore(HDF5Plugin, MerlinFileStoreHDF5):
 
     def describe(self):
         ret = super().describe()
-        key = self.parent._image_name
-        ret[key].setdefault("dtype_str", "<u2")
+        key = self.parent._image_name  # type: ignore[union-attr]
+        ret[key].setdefault("dtype_str", "<u2")  # type: ignore[attr-defined]
         return ret
 
 
@@ -172,7 +173,7 @@ class CDIMerlinDetector(CDIModalTrigger, MerlinDetector):
         super().mode_internal()
 
         count_time = self.count_time.get()
-        if count_time is not None:
+        if isinstance(count_time, float):
             self.stage_sigs[self.cam.acquire_time] = count_time
             self.stage_sigs[self.cam.acquire_period] = count_time + 0.005
 

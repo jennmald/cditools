@@ -3,6 +3,7 @@ from __future__ import annotations
 import itertools
 import logging
 import time as ttime
+from collections.abc import Sequence
 from typing import Any
 
 from ophyd import (
@@ -22,9 +23,9 @@ class TriggerBase(BlueskyInterface):
         super().__init__(*args, **kwargs)
 
         # If acquiring, stop.
-        self.stage_sigs[self.cam.acquire] = 0
-        self.stage_sigs[self.cam.image_mode] = "Multiple"
-        self._acquisition_signal = self.cam.acquire
+        self.stage_sigs[self.cam.acquire] = 0  # type: ignore[attr-defined]
+        self.stage_sigs[self.cam.image_mode] = "Multiple"  # type: ignore[attr-defined]
+        self._acquisition_signal = self.cam.acquire  # type: ignore[attr-defined]
 
         self._status = None
 
@@ -60,7 +61,7 @@ class CDIModalBase(Device):
         logger.debug("%s external triggering %s", self.name, self.mode_settings.get())
 
     @property
-    def mode(self) -> str:
+    def mode(self) -> Any:
         """Trigger mode (external/internal)"""
         return self.mode_settings.mode.get()
 
@@ -81,8 +82,14 @@ class CDIModalBase(Device):
 
 
 class CDIModalTrigger(CDIModalBase, TriggerBase):
-    def __init__(self, *args: object, image_name: str | None = None, **kwargs: object):
-        super().__init__(*args, **kwargs)
+    def __init__(
+        self,
+        prefix: str,
+        *args: object,
+        image_name: str | None = None,
+        **kwargs: object,
+    ) -> None:
+        super().__init__(prefix, *args, **kwargs)
         if image_name is None:
             image_name = "_".join([self.name, "image"])
         self._image_name = image_name
@@ -177,7 +184,7 @@ class FileStoreBulkReadable(FileStoreIterativeWrite):
         self._datum_uids.clear()
         self._point_counter = itertools.count()
 
-    def bulk_read(self, timestamps):
+    def bulk_read(self, timestamps: Sequence[float]) -> dict[str, list[str]]:
         image_name = self.image_name
 
         uids = [self.generate_datum(self.image_name, ts, {}) for ts in timestamps]
@@ -187,5 +194,5 @@ class FileStoreBulkReadable(FileStoreIterativeWrite):
         return {image_name: uids}
 
     @property
-    def image_name(self):
-        return self.parent._image_name
+    def image_name(self) -> str:
+        return self.parent._image_name  # type: ignore[attr-defined]
