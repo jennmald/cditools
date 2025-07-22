@@ -69,17 +69,6 @@ class EigerFileHandler(Device, FileStoreBase):
     def sequence_number(self) -> int:
         return self.sequence_id_offset + int(self.sequence_id.get())
 
-    @property
-    def master_file_paths(self) -> list[PurePath]:
-        if len(self._master_file_paths) == 0:
-            msg = "Master file path has not been set. Call stage() first."
-            raise ValueError(msg)
-        return self._master_file_paths
-
-    @property
-    def sequence_number(self) -> int:
-        return self.sequence_id_offset + int(self.sequence_id.get())
-
     def stage(self) -> list[object]:  # type: ignore[reportIncompatibleMethodOverride]
         res_uid = new_short_uid()
         write_path = Path(f"{datetime.now().strftime(self.write_path_template)}/")
