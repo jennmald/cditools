@@ -152,7 +152,7 @@ class CDIModalTrigger(CDIModalBase, TriggerBase):
     def trigger_external(self) -> DeviceStatus:
         if self._staged != Staged.yes:
             msg = (
-                "This detector is not ready to trigger."
+                "This detector is not ready to trigger. "
                 "Call the stage() method before triggering."
             )
             raise RuntimeError(msg)
