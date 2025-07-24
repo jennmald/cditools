@@ -19,9 +19,9 @@ from ophyd import Component as Cpt
 from ophyd.areadetector import EpicsSignalWithRBV
 from ophyd.areadetector.base import ADComponent
 from ophyd.areadetector.filestore_mixins import FileStorePluginBase, FileStoreTIFF
+from ophyd.utils.paths import makedirs
 
 from .trigger_mixins import CDIModalTrigger, FileStoreBulkReadable
-from .utils import makedirs
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +83,7 @@ class MerlinFileStoreHDF5(FileStorePluginBase, FileStoreBulkReadable):
         staged = super().stage()
         logger.info("Staging step 2")
         res_kwargs = {"frame_per_point": 1}
-        logger.info("res_kwargs = {frame_per_point: }")
+        logger.info(f"res_kwargs = {{frame_per_point: {res_kwargs['frame_per_point']}}}")
 
         logger.debug("Inserting resource with filename %s", self._fn)
         logger.info("Inserting resource with filename %s", self._fn)

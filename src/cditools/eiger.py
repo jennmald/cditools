@@ -88,8 +88,8 @@ class EigerFileHandler(Device, FileStoreBase):
         file_prefix = PurePath(self.file_path.get()) / res_uid
         self._fn = file_prefix
 
-        images_per_file = self.file_write_images_per_file.get()
-        resource_kwargs = {"images_per_file": images_per_file}
+        images_per_file: str = self.file_write_images_per_file.get()
+        resource_kwargs: dict[str, str] = {"images_per_file": images_per_file}
 
         self._generate_resource(resource_kwargs)
 
