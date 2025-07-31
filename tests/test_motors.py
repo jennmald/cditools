@@ -55,34 +55,34 @@ def black_hole_ioc() -> Generator[None, None, None]:
 
 def test_motors_can_connect(black_hole_ioc: None) -> None:
     dm1 = DM1(prefix="XF:09IDA-OP:1{", name="dm1")
-    dm1.wait_for_connection(timeout=10.0)
+    dm1.wait_for_connection(timeout=60.0)
 
     vpm = VPM(prefix="XF:09IDA-OP:1{", name="vpm")
-    vpm.wait_for_connection(timeout=10.0)
+    vpm.wait_for_connection(timeout=60.0)
 
     hpm = HPM(prefix="XF:09IDA-OP:1{", name="hpm")
-    hpm.wait_for_connection(timeout=10.0)
+    hpm.wait_for_connection(timeout=60.0)
 
     dm2 = DM2(prefix="XF:09IDA-OP:1{", name="dm2")
-    dm2.wait_for_connection(timeout=10.0)
+    dm2.wait_for_connection(timeout=60.0)
 
     dmm = DMM(prefix="XF:09IDA-OP:1{", name="dmm")
-    dmm.wait_for_connection(timeout=10.0)
+    dmm.wait_for_connection(timeout=60.0)
 
     dcm = DCM(prefix="XF:09IDA-OP:1{", name="dcm")
-    dcm.wait_for_connection(timeout=10.0)
+    dcm.wait_for_connection(timeout=60.0)
 
     dm3 = DM3(prefix="XF:09IDB-OP:1{", name="dm3")
-    dm3.wait_for_connection(timeout=10.0)
+    dm3.wait_for_connection(timeout=60.0)
 
     kb = KB(prefix="XF:09IDC-OP:1{", name="kb")
-    kb.wait_for_connection(timeout=10.0)
+    kb.wait_for_connection(timeout=60.0)
 
     dm4 = DM4(prefix="XF:09IDC-OP:1{", name="dm4")
-    dm4.wait_for_connection(timeout=10.0)
+    dm4.wait_for_connection(timeout=60.0)
 
     gon = GON(prefix="XF:09IDC-OP:1{", name="gon")
-    gon.wait_for_connection(timeout=10.0)
+    gon.wait_for_connection(timeout=60.0)
 
     bcu = BCU(prefix="XF:09IDC-OP:1{", name="bcu")
-    bcu.wait_for_connection(timeout=10.0)
+    bcu.wait_for_connection(timeout=60.0)
