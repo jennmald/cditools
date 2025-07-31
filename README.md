@@ -28,8 +28,9 @@
 
 ## Pyright Configuration
 
-The `pyrightconfig.json` file configures the [Pyright type checker](https://github.com/microsoft/pyright) for this
-project. It sets the type checking mode to "basic" for less strict analysis and
-disables warnings about missing type stubs and untyped base classes. This helps
-minimize unnecessary alerts from third-party libraries that lack type
-information, allowing you to focus on type issues within your own codebase.
+The `pyrightconfig.json` file configures the
+[Pyright type checker](https://github.com/microsoft/pyright) for this project.
+It sets the type checking mode to "basic" for less strict analysis and disables
+warnings about missing type stubs and untyped base classes. This helps minimize
+unnecessary alerts from third-party libraries that lack type information,
+allowing you to focus on type issues within your own codebase.
