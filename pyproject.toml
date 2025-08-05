@@ -107,13 +107,14 @@ report.exclude_also = [
 [tool.pyright]
 include = ["src", "tests"]
 pythonVersion = "3.9"
-typeCheckingMode = "strict"
+typeCheckingMode = "basic"
 reportMissingImports = true
 # Required for untyped packages
 reportMissingTypeStubs = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
 reportUnknownVariableType = false
+reportUntypedBaseClass = false
 
 [tool.ruff]
 

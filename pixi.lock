@@ -422,8 +422,8 @@ packages:
   requires_python: '>=3.8'
 - pypi: .
   name: cditools
-  version: 0.1.1.dev1+g19e6aefc3.d20250805
-  sha256: a04d9dc251706758f33dc1b14dfe8b43e44912bf50e513af70194775048fe4e0
+  version: 0.1.1.dev3+gc2099d8ec.d20250805
+  sha256: 1be92c101efb2af67aa5d8f11e29d0818998af5c82c19f05e2de0f20efa651ab
   requires_dist:
   - ophyd
   - h5py
