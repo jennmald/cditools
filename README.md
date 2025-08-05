@@ -26,11 +26,11 @@
 
 <!-- prettier-ignore-end -->
 
-## Pyright Configuration
+## Overview
 
-The `pyrightconfig.json` file configures the
-[Pyright type checker](https://github.com/microsoft/pyright) for this project.
-It sets the type checking mode to "basic" for less strict analysis and disables
-warnings about missing type stubs and untyped base classes. This helps minimize
-unnecessary alerts from third-party libraries that lack type information,
-allowing you to focus on type issues within your own codebase.
+Set of tools for operating the [CDI beamline](https://www.bnl.gov/nsls2/beamlines/beamline.php?r=9-ID) at the [National Synchrotron Light Source II (NSLS-II)](https://www.bnl.gov/nsls2/).
+
+
+## See Also
+
+- [NSLS2/cdi-profile-collection](https://github.com/NSLS2/cdi-profile-collection) for where this package is used in practice
