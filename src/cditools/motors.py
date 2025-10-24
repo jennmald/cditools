@@ -29,6 +29,27 @@ class VPM(Device):
             "y": (EpicsMotor, "FS:VPM-Ax:Y}Mtr", {}),
         }
     )
+
+    def insert_screen(self, state: float):
+        if state > 0.0:  # should this be != to zero?
+            self.fs.y.set(0.0)  # insert screen
+
+    def remove_screen(self, state: float):
+        if state == 0.0:  # ask what value is far enough to remove the screen
+            self.fs.y.set(1.0)  # remove screen
+
+    # possible wrapper for after scan cleanup
+    # def set_screen(self, state: float):
+    #     # the screen is "in" (in the beam) when state is 1.0
+    #     if state == 0.0:
+    #         pass
+    #     # otherwise screen is "out" (out of the beam), for normal operations
+    #     elif state > 0.0:
+    #         pass
+    #     else:
+    #         raise ValueError(f"Invalid state {state} for VPM screen.")
+    #     #return super().set(state)
+
     slit = DDC(
         {
             "hg": (EpicsMotor, "Slt:VPM-Ax:HG}Mtr", {}),
@@ -60,6 +81,27 @@ class HPM(Device):
             "y": (EpicsMotor, "FS:HPM-Ax:Y}Mtr", {}),
         }
     )
+
+    def insert_screen(self, state: float):
+        if state > 0.0:  # should this be != to zero?
+            self.fs.y.set(0.0)  # insert screen
+
+    def remove_screen(self, state: float):
+        if state == 0.0:  # ask what value is far enough to remove the screen
+            self.fs.y.set(1.0)  # remove screen
+
+    # possible wrapper for after scan cleanup
+    # def set_screen(self, state: float):
+    #     # the screen is "in" (in the beam) when state is 1.0
+    #     if state == 0.0:
+    #         pass
+    #     # otherwise screen is "out" (out of the beam), for normal operations
+    #     elif state > 0.0:
+    #         pass
+    #     else:
+    #         raise ValueError(f"Invalid state {state} for HPM screen.")
+    #     #return super().set(state)
+
     slit = DDC(
         {
             "hg": (EpicsMotor, "Slt:HPM-Ax:HG}Mtr", {}),

@@ -6,6 +6,7 @@ from collections.abc import Generator
 from subprocess import PIPE, Popen
 
 import pytest
+from bluesky.plans import scan
 from ophyd import Device, EpicsSignal
 
 from cditools.motors import (
@@ -86,3 +87,9 @@ def test_motors_can_connect(black_hole_ioc: None) -> None:
 
     bcu = BCU(prefix="XF:09IDC-OP:1{", name="bcu")
     bcu.wait_for_connection(timeout=60.0)
+
+
+def test_DCM_scan():
+    dcm = DCM(prefix="XF:09IDA-OP:1{", name="dcm", labels=["motors"])
+    dcm.wait_for_connection(timeout=60.0)
+    RE(scan([], dcm.h, -3, 3, 2))
