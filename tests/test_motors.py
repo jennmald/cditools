@@ -7,6 +7,7 @@ from subprocess import PIPE, Popen
 
 import pytest
 from bluesky.plans import scan
+from conftest import RE
 from ophyd import Device, EpicsSignal
 
 from cditools.motors import (
@@ -94,6 +95,7 @@ def test_DCM_scan():
     dcm.wait_for_connection(timeout=60.0)
     RE(scan([], dcm.h, -3, 3, 2))
 
+
 def test_HPM_slits():
     hpm = HPM(prefix="XF:09IDA-OP:1{", name="hpm", labels=["motors"])
     hpm.wait_for_connection(timeout=60.0)
@@ -105,6 +107,7 @@ def test_HPM_slits():
     RE(scan([], hpm.slits.hc, -0.1, 0.1, 2))
     # vertical center
     RE(scan([], hpm.slits.vc, -0.1, 0.1, 2))
+
 
 def test_VPM_slits():
     vpm = VPM(prefix="XF:09IDA-OP:1{", name="vpm", labels=["motors"])
