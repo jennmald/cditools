@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from ophyd import Component as Cpt  # type: ignore[import-not-found]
-from ophyd import Device, EpicsMotor, PseudoPositioner, PseudoSingle, Signal
-from ophyd import DynamicDeviceComponent as DDC
-from ophyd.positioner import pseudo_position_argument, real_position_argument
-from ophyd.positioner import PositionerBase
 import numpy as np
+from ophyd import Component as Cpt  # type: ignore[import-not-found]
+from ophyd import Device, EpicsMotor, PseudoPositioner, PseudoSingle
+from ophyd import DynamicDeviceComponent as DDC
+from ophyd.positioner import (
+    pseudo_position_argument,
+    real_position_argument,
+)
 
 
 class DM1(Device):
@@ -173,21 +175,21 @@ class DCMBase(Device):
         }
     )
 
+
 class Energy(PseudoPositioner):
     bragg = Cpt(EpicsMotor, "Mono:HDCM-Ax:Bragg}Mtr")
     cgap = Cpt(EpicsMotor, "Mono:HDCM-Ax:HG}Mtr")
     # Synthetic Axis
     energy = Cpt(PseudoSingle, equ="KeV")
 
-    #Energy "limits"
-    _low = 5.0 #TODO: CHECK THIS VALUE
-    _high = 15.0 #TODO: CHECK THIS VALUE
+    # Energy "limits"
+    _low = 5.0  # TODO: CHECK THIS VALUE
+    _high = 15.0  # TODO: CHECK THIS VALUE
 
     # Set up constants
     Xoffset = 20.0  # mm
     d_111 = 3.1286911960950756
     ANG_OVER_KEV = 12.3984
-
 
     def energy_to_positions(self, target_energy: float):
         """Compute undulator and mono positions given a target energy
@@ -206,28 +208,25 @@ class Energy(PseudoPositioner):
         """
 
         # Calculate Bragg RBV
-        bragg = (
-            np.arcsin((self.ANG_OVER_KEV / target_energy) / (2 * self.d_111))
-        )
+        bragg = np.arcsin((self.ANG_OVER_KEV / target_energy) / (2 * self.d_111))
 
         # Calculate C2X
         gap = self.Xoffset / 2 / np.cos(bragg)
 
         return bragg, gap
-    
+
     @pseudo_position_argument
     def forward(self, p_pos):
-        energy = p_pos.energy # energy assumed in keV
+        energy = p_pos.energy  # energy assumed in keV
         bragg, gap = self.energy_to_positions(energy)
         return self.RealPosition(bragg=np.rad2deg(bragg), cgap=gap)
-    
+
     @real_position_argument
     def inverse(self, r_pos):
         bragg = np.deg2rad(r_pos.bragg)
-        e = self.ANG_OVER_KEV / (
-            2 * self.d_111 * np.sin(bragg)
-        )
+        e = self.ANG_OVER_KEV / (2 * self.d_111 * np.sin(bragg))
         return self.PseudoPosition(energy=float(e))
+
 
 class DM3(Device):
     slit = DDC(
