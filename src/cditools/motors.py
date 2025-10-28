@@ -4,7 +4,7 @@ import numpy as np
 from ophyd import Component as Cpt  # type: ignore[import-not-found]
 from ophyd import Device, EpicsMotor, PseudoPositioner, PseudoSingle
 from ophyd import DynamicDeviceComponent as DDC
-from ophyd.positioner import (
+from ophyd.pseudopos import (
     pseudo_position_argument,
     real_position_argument,
 )
