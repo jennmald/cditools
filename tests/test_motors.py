@@ -5,6 +5,7 @@ import time
 from collections.abc import Generator
 from subprocess import PIPE, Popen
 
+import bluesky.plan_stubs as bps
 import pytest
 from bluesky.plans import scan
 from conftest import RE
@@ -100,23 +101,23 @@ def test_HPM_slits():
     hpm = HPM(prefix="XF:09IDA-OP:1{", name="hpm", labels=["motors"])
     hpm.wait_for_connection(timeout=60.0)
     # horizontal gap
-    RE(scan([], hpm.slits.hg, 1.2, 1.4, 2))
+    yield from bps.mv(hpm.slits.hg, -4)
     # vertical gap
-    RE(scan([], hpm.slits.vg, 1.2, 1.4, 2))
+    yield from bps.mv(hpm.slits.vg, -4)
     # horizontal center
-    RE(scan([], hpm.slits.hc, -0.1, 0.1, 2))
+    yield from bps.mv(hpm.slits.hc, 0)
     # vertical center
-    RE(scan([], hpm.slits.vc, -0.1, 0.1, 2))
+    yield from bps.mv(hpm.slits.vc, 0)
 
 
 def test_VPM_slits():
     vpm = VPM(prefix="XF:09IDA-OP:1{", name="vpm", labels=["motors"])
     vpm.wait_for_connection(timeout=60.0)
     # horizontal gap
-    RE(scan([], vpm.slits.hg, 1.2, 1.4, 2))
+    yield from bps.mv(vpm.slits.hg, -4)
     # vertical gap
-    RE(scan([], vpm.slits.vg, 1.2, 1.4, 2))
+    yield from bps.mv(vpm.slits.vg, -4)
     # horizontal center
-    RE(scan([], vpm.slits.hc, -0.1, 0.1, 2))
+    yield from bps.mv(vpm.slits.hc, 0)
     # vertical center
-    RE(scan([], vpm.slits.vc, -0.1, 0.1, 2))
+    yield from bps.mv(vpm.slits.vc, 0)
