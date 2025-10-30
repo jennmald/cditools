@@ -100,6 +100,32 @@ def test_DCM_scan():
     #RE(scan([], dcm.c2.r, -3, 3, 2))
     #RE(scan([], dcm.c2.fp, -3, 3, 2))
 
+def test_HPM():
+    hpm = HPM(prefix="XF:09IDA-OP:1{", name="hpm", labels=["motors"])
+    hpm.wait_for_connection(timeout=60.0)
+    # pitch
+    yield from bps.mv(hpm.mir.p, 1)
+    yield from bps.mv(hpm.mir.p, -1)
+    # translation Y (height)
+    yield from bps.mv(hpm.mir.y, 1)
+    yield from bps.mv(hpm.mir.y, -1)
+    # roll
+    yield from bps.mv(hpm.mir.r, 1)
+    yield from bps.mv(hpm.mir.r, -1)
+
+def test_VPM():
+    vpm = VPM(prefix="XF:09IDA-OP:1{", name="vpm", labels=["motors"])
+    vpm.wait_for_connection(timeout=60.0)
+    # pitch
+    yield from bps.mv(vpm.mir.p, 1)
+    yield from bps.mv(vpm.mir.p, -1)
+    # translation Y (height)
+    yield from bps.mv(vpm.mir.y, 1)
+    yield from bps.mv(vpm.mir.y, -1)
+    # roll
+    yield from bps.mv(vpm.mir.r, 1)
+    yield from bps.mv(vpm.mir.r, -1)
+
 
 def test_HPM_slits():
     hpm = HPM(prefix="XF:09IDA-OP:1{", name="hpm", labels=["motors"])
