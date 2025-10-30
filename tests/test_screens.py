@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 from bluesky import plans as bp
+
 from cditools.screens import StandardProsilicaCam
 
-def test_screenA1():
-    screenA1 = StandardProsilicaCam() # prefix?
-    yield from bp.count([screenA1], 2)
 
+def test_screenA1():
+    screenA1 = StandardProsilicaCam()  # prefix?
+    yield from bp.count([screenA1], 2)

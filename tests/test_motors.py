@@ -95,10 +95,11 @@ def test_DCM_scan():
     dcm = DCMBase(prefix="XF:09IDA-OP:1{", name="dcm", labels=["motors"])
     dcm.wait_for_connection(timeout=60.0)
     RE(scan([], dcm.h, -3, 3, 2))
-    #RE(scan([], dcm.v, -3, 3, 2))
-    #RE(scan([], dcm.c2.p, -3, 3, 2))
-    #RE(scan([], dcm.c2.r, -3, 3, 2))
-    #RE(scan([], dcm.c2.fp, -3, 3, 2))
+    # RE(scan([], dcm.v, -3, 3, 2))
+    # RE(scan([], dcm.c2.p, -3, 3, 2))
+    # RE(scan([], dcm.c2.r, -3, 3, 2))
+    # RE(scan([], dcm.c2.fp, -3, 3, 2))
+
 
 def test_HPM():
     hpm = HPM(prefix="XF:09IDA-OP:1{", name="hpm", labels=["motors"])
@@ -112,6 +113,7 @@ def test_HPM():
     # roll
     yield from bps.mv(hpm.mir.r, 1)
     yield from bps.mv(hpm.mir.r, -1)
+
 
 def test_VPM():
     vpm = VPM(prefix="XF:09IDA-OP:1{", name="vpm", labels=["motors"])
