@@ -194,17 +194,10 @@ class DMM(Device):
 
 
 class DCMBase(Device):
+    pitch = Cpt(EpicsMotor, "Mono:HDCM-Ax:Pitch}Mtr")
+    fine = {"pitch": Cpt(EpicsMotor, "Mono:HDCM-Ax:FP}Mtr"), "roll":Cpt(EpicsMotor, "Mono:HDCM-Ax:Roll}Mtr")}
     h = Cpt(EpicsMotor, "Mono:HDCM-Ax:TX}Mtr")
     v = Cpt(EpicsMotor, "Mono:HDCM-Ax:TY}Mtr")
-    bragg = Cpt(EpicsMotor, "Mono:HDCM-Ax:Bragg}Mtr")
-    c2 = DDC(
-        {
-            "p": (EpicsMotor, "Mono:HDCM-Ax:Pitch}Mtr", {}),
-            "r": (EpicsMotor, "Mono:HDCM-Ax:Roll}Mtr", {}),
-            "fp": (EpicsMotor, "Mono:HDCM-Ax:FP}Mtr", {}),
-        }
-    )
-
 
 class Energy(PseudoPositioner):
     bragg = Cpt(EpicsMotor, "Mono:HDCM-Ax:Bragg}Mtr")
