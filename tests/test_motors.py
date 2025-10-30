@@ -8,7 +8,6 @@ from subprocess import PIPE, Popen
 import bluesky.plan_stubs as bps
 import pytest
 from bluesky.plans import scan
-from conftest import RE
 from ophyd import Device, EpicsSignal
 
 from cditools.motors import (
@@ -94,11 +93,8 @@ def test_motors_can_connect(black_hole_ioc: None) -> None:
 def test_DCM_scan():
     dcm = DCMBase(prefix="XF:09IDA-OP:1{", name="dcm", labels=["motors"])
     dcm.wait_for_connection(timeout=60.0)
-    RE(scan([], dcm.h, -3, 3, 2))
-    # RE(scan([], dcm.v, -3, 3, 2))
-    # RE(scan([], dcm.c2.p, -3, 3, 2))
-    # RE(scan([], dcm.c2.r, -3, 3, 2))
-    # RE(scan([], dcm.c2.fp, -3, 3, 2))
+    yield from scan([], dcm.bragg, -0.05, 0.05, 2)
+    yield from scan([], dcm.c2.p, -0.01, 0.01, 2)
 
 
 def test_HPM():

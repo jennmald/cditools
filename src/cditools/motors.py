@@ -196,6 +196,7 @@ class DMM(Device):
 class DCMBase(Device):
     h = Cpt(EpicsMotor, "Mono:HDCM-Ax:TX}Mtr")
     v = Cpt(EpicsMotor, "Mono:HDCM-Ax:TY}Mtr")
+    bragg = Cpt(EpicsMotor, "Mono:HDCM-Ax:Bragg}Mtr")
     c2 = DDC(
         {
             "p": (EpicsMotor, "Mono:HDCM-Ax:Pitch}Mtr", {}),
