@@ -10,6 +10,31 @@ from ophyd.pseudopos import (
 )
 
 
+class EpicsMotorRO(EpicsMotor):
+    def move(self, *args, **kwargs):
+        raise PermissionError(f"{self.name} is read-only and cannot be moved.")
+
+    def stop(self, *args, **kwargs):
+        raise PermissionError(f"{self.name} is read-only and cannot be stopped manually.")
+
+    def set(self, *args, **kwargs):
+        raise PermissionError(f"{self.name} is read-only and cannot be set.")
+
+    def set_position(self, *args, **kwargs):
+        raise PermissionError(f"{self.name} is read-only and its position cannot be set.")
+
+    # Optionally, lock write PVs if desired
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Disable write access to underlying signals
+        for sig_name, sig in self.signal_names.items():
+            if hasattr(sig, 'put'):
+                sig.put = self._readonly_put
+
+    def _readonly_put(self, *args, **kwargs):
+        raise PermissionError(f"{self.name} is read-only and cannot write PVs.")
+
+
 class DM1(Device):
     """Ophyd Device for DM1"""
 

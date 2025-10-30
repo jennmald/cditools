@@ -16,7 +16,7 @@ class ProsilicaCamBase(ProsilicaDetector):
     roi2 = Cpt(ROIPlugin, 'ROI2:')
     roi3 = Cpt(ROIPlugin, 'ROI3:')
     roi4 = Cpt(ROIPlugin, 'ROI4:')
-    roistat1 = Cpt(ROIStatPlugin, 'ROI1:')
+    roistat1 = Cpt(ROIStatPlugin, 'ROISTAT1:')
     _default_plugin_graph: Optional[dict[PluginBase, Union[CamBase, PluginBase]]] = None
 
     def __init__(self, *args, **kwargs):

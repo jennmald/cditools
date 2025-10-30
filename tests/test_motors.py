@@ -95,6 +95,10 @@ def test_DCM_scan():
     dcm = DCMBase(prefix="XF:09IDA-OP:1{", name="dcm", labels=["motors"])
     dcm.wait_for_connection(timeout=60.0)
     RE(scan([], dcm.h, -3, 3, 2))
+    #RE(scan([], dcm.v, -3, 3, 2))
+    #RE(scan([], dcm.c2.p, -3, 3, 2))
+    #RE(scan([], dcm.c2.r, -3, 3, 2))
+    #RE(scan([], dcm.c2.fp, -3, 3, 2))
 
 
 def test_HPM_slits():
