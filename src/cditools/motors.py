@@ -195,7 +195,7 @@ class DMM(Device):
 
 class DCMBase(Device):
     pitch = Cpt(EpicsMotor, "Mono:HDCM-Ax:Pitch}Mtr")
-    fine = {"pitch": Cpt(EpicsMotor, "Mono:HDCM-Ax:FP}Mtr"), "roll":Cpt(EpicsMotor, "Mono:HDCM-Ax:Roll}Mtr")}
+    fine = {"fpitch": Cpt(EpicsMotor, "Mono:HDCM-Ax:FP}Mtr"), "roll":Cpt(EpicsMotor, "Mono:HDCM-Ax:Roll}Mtr")}
     h = Cpt(EpicsMotor, "Mono:HDCM-Ax:TX}Mtr")
     v = Cpt(EpicsMotor, "Mono:HDCM-Ax:TY}Mtr")
 
