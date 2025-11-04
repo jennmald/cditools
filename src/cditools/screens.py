@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Optional, Union
+from typing import Optional
 
 from ophyd import (
     CamBase,
@@ -30,7 +30,7 @@ class ProsilicaCamBase(ProsilicaDetector):
     roi3 = Cpt(ROIPlugin, "ROI3:")
     roi4 = Cpt(ROIPlugin, "ROI4:")
     roistat1 = Cpt(ROIStatPlugin, "ROISTAT1:")
-    _default_plugin_graph: Optional[dict[PluginBase, Union[CamBase, PluginBase]]] = None
+    _default_plugin_graph: Optional[dict[PluginBase, CamBase | PluginBase]] = None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -40,12 +40,10 @@ class ProsilicaCamBase(ProsilicaDetector):
     @property
     def default_plugin_graph(
         self,
-    ) -> Optional[dict[PluginBase, Union[CamBase, PluginBase]]]:
+    ) -> Optional[dict[PluginBase, CamBase | PluginBase]]:
         return self._default_plugin_graph
 
-    def _stage_plugin_graph(
-        self, plugin_graph: dict[PluginBase, Union[CamBase, PluginBase]]
-    ):
+    def _stage_plugin_graph(self, plugin_graph: dict[PluginBase, CamBase | PluginBase]):
         for target, source in plugin_graph.items():
             self.stage_sigs[target.nd_array_port] = source.port_name.get()
             self.stage_sigs[target.enable] = True
@@ -67,3 +65,31 @@ class StandardProsilicaCam(ProsilicaCamBase):
 
     def stage(self):
         return super().stage()
+
+    # def insert_screen(self, state: float):
+    #     if state > 0.0:  # should this be != to zero?
+    #         self.fs.y.set(0.0)  # insert screen
+
+    # def remove_screen(self, state: float):
+    #     if (
+    #         state == 0.0
+    #     ):  # 25 mm is the current out value, could change after operations
+    #         self.fs.y.set(25.0)  # remove screen
+
+    # possible wrapper for after scan cleanup
+    # def set_screen(self, state: float):
+    #     # the screen is "in" (in the beam) when state is 1.0
+    #     if state == 0.0:
+    #         pass
+    #     # otherwise screen is "out" (out of the beam), for normal operations
+    #     elif state > 0.0:
+    #         pass
+    #     else:
+    #         raise ValueError(f"Invalid state {state} for VPM screen.")
+    #     #return super().set(state)
+
+
+cam_A1 = StandardProsilicaCam("XF:09IDA-OP:1{DM-Cam:1}", name="cam_A1")
+cam_A2 = StandardProsilicaCam("XF:09IDA-BI:1{WBStop-Cam:2}", name="cam_A2")
+cam_A3 = StandardProsilicaCam("XF:09IDB-BI:1{VPM-Cam:3}", name="cam_A3")
+cam_A4 = StandardProsilicaCam("XF:09IDB-BI:1{HPM-Cam:4}", name="cam_A4")

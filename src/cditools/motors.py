@@ -11,32 +11,33 @@ from ophyd.pseudopos import (
 
 
 class EpicsMotorRO(EpicsMotor):
-    def move(self, *args, **kwargs):
-        raise PermissionError(f"{self.name} is read-only and cannot be moved.")
+    def move(self, *args, **kwargs):  # noqa: ARG002
+        msg = f"{self.name} is read-only and cannot be moved."
+        raise PermissionError(msg)
 
-    def stop(self, *args, **kwargs):
-        raise PermissionError(
-            f"{self.name} is read-only and cannot be stopped manually."
-        )
+    def stop(self, *args, **kwargs):  # noqa: ARG002
+        msg = f"{self.name} is read-only and cannot be stopped manually."
+        raise PermissionError(msg)
 
-    def set(self, *args, **kwargs):
-        raise PermissionError(f"{self.name} is read-only and cannot be set.")
+    def set(self, *args, **kwargs):  # noqa: ARG002
+        msg = f"{self.name} is read-only and cannot be set."
+        raise PermissionError(msg)
 
-    def set_position(self, *args, **kwargs):
-        raise PermissionError(
-            f"{self.name} is read-only and its position cannot be set."
-        )
+    def set_position(self, *args, **kwargs):  # noqa: ARG002
+        msg = f"{self.name} is read-only and its position cannot be set."
+        raise PermissionError(msg)
 
     # Optionally, lock write PVs if desired
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Disable write access to underlying signals
-        for sig_name, sig in self.signal_names.items():
+        for _sig_name, sig in self.signal_names.items():
             if hasattr(sig, "put"):
                 sig.put = self._readonly_put
 
-    def _readonly_put(self, *args, **kwargs):
-        raise PermissionError(f"{self.name} is read-only and cannot write PVs.")
+    def _readonly_put(self, *args, **kwargs):  # noqa: ARG002
+        msg = f"{self.name} is read-only and cannot write PVs."
+        raise PermissionError(msg)
 
 
 class DM1(Device):
@@ -63,26 +64,6 @@ class VPM(Device):
             "y": (EpicsMotor, "FS:VPM-Ax:Y}Mtr", {}),
         }
     )
-
-    def insert_screen(self, state: float):
-        if state > 0.0:  # should this be != to zero?
-            self.fs.y.set(0.0)  # insert screen
-
-    def remove_screen(self, state: float):
-        if state == 0.0:  # ask what value is far enough to remove the screen
-            self.fs.y.set(1.0)  # remove screen
-
-    # possible wrapper for after scan cleanup
-    # def set_screen(self, state: float):
-    #     # the screen is "in" (in the beam) when state is 1.0
-    #     if state == 0.0:
-    #         pass
-    #     # otherwise screen is "out" (out of the beam), for normal operations
-    #     elif state > 0.0:
-    #         pass
-    #     else:
-    #         raise ValueError(f"Invalid state {state} for VPM screen.")
-    #     #return super().set(state)
 
     slit = DDC(
         {
@@ -119,26 +100,6 @@ class HPM(Device):
         }
     )
 
-    def insert_screen(self, state: float):
-        if state > 0.0:  # should this be != to zero?
-            self.fs.y.set(0.0)  # insert screen
-
-    def remove_screen(self, state: float):
-        if state == 0.0:  # ask what value is far enough to remove the screen
-            self.fs.y.set(1.0)  # remove screen
-
-    # possible wrapper for after scan cleanup
-    # def set_screen(self, state: float):
-    #     # the screen is "in" (in the beam) when state is 1.0
-    #     if state == 0.0:
-    #         pass
-    #     # otherwise screen is "out" (out of the beam), for normal operations
-    #     elif state > 0.0:
-    #         pass
-    #     else:
-    #         raise ValueError(f"Invalid state {state} for HPM screen.")
-    #     #return super().set(state)
-
     slit = DDC(
         {
             "hg": (EpicsMotor, "Slt:HPM-Ax:HG}Mtr", {}),
@@ -155,8 +116,6 @@ class HPM(Device):
             "p": (EpicsMotor, "Mir:HPM-Ax:Pitch}Mtr", {}),
             "r": (EpicsMotor, "Mir:HPM-Ax:Roll}Mtr", {}),
             "y": (EpicsMotor, "Mir:HPM-Ax:TY}Mtr", {}),
-            "us_b": (EpicsMotor, "Mir:HPM-Ax:UB}Mtr", {}),
-            "ds_b": (EpicsMotor, "Mir:HPM-Ax:DB}Mtr", {}),
             "bend": (EpicsMotor, "Mir:HPM-Ax:Bnd}Mtr", {}),
             "bend_off": (EpicsMotor, "Mir:HPM-Ax:BndOff}Mtr", {}),
             "us_x": (EpicsMotor, "Mir:HPM-Ax:XU}Mtr", {}),
@@ -167,8 +126,6 @@ class HPM(Device):
             "ds_lt": (EpicsMotorRO, "Mir:HPM-Ax:XD}Mtr", {}),
             "us_b": (EpicsMotorRO, "Mir:HPM-Ax:UB}Mtr", {}),
             "ds_b": (EpicsMotorRO, "Mir:HPM-Ax:DB}Mtr", {}),
-            "bend": (EpicsMotorRO, "Mir:HPM-Ax:Bnd}Mtr", {}),
-            "bend_off": (EpicsMotorRO, "Mir:HPM-Ax:BndOff}Mtr", {}),
         }
     )
 
@@ -204,7 +161,7 @@ class DMM(Device):
 
 class DCMBase(Device):
     pitch = Cpt(EpicsMotor, "Mono:HDCM-Ax:Pitch}Mtr")
-    fine = {
+    fine = {  # noqa: RUF012
         "fpitch": Cpt(EpicsMotor, "Mono:HDCM-Ax:FP}Mtr"),
         "roll": Cpt(EpicsMotor, "Mono:HDCM-Ax:Roll}Mtr"),
     }
