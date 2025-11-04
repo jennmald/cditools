@@ -101,14 +101,26 @@ def test_HPM():
     hpm = HPM(prefix="XF:09IDA-OP:1{", name="hpm", labels=["motors"])
     hpm.wait_for_connection(timeout=60.0)
     # pitch
-    yield from bps.mv(hpm.mir.p, 1)
-    yield from bps.mv(hpm.mir.p, -1)
+    yield from bps.mv(hpm.mir.p, 8)
+    yield from bps.mv(hpm.mir.p, 9)
     # translation Y (height)
-    yield from bps.mv(hpm.mir.y, 1)
-    yield from bps.mv(hpm.mir.y, -1)
+    yield from bps.mv(hpm.mir.y, -2393.62)
+    yield from bps.mv(hpm.mir.y, -2493.62)
     # roll
-    yield from bps.mv(hpm.mir.r, 1)
-    yield from bps.mv(hpm.mir.r, -1)
+    yield from bps.mv(hpm.mir.r, -0.5)
+    yield from bps.mv(hpm.mir.r, -0.7)
+
+    # US Jack
+    yield from bps.mv(hpm.mir.us_j, 0.5)
+    yield from bps.mv(hpm.mir.us_j, 0)
+
+    # DS InJack
+    yield from bps.mv(hpm.mir.ib_j, 0.5)
+    yield from bps.mv(hpm.mir.ib_j, 0)
+
+    # DS OutJack
+    yield from bps.mv(hpm.mir.ob_j, 0.5)
+    yield from bps.mv(hpm.mir.ob_j, 0)
 
 
 def test_VPM():
@@ -124,28 +136,48 @@ def test_VPM():
     yield from bps.mv(vpm.mir.r, 1)
     yield from bps.mv(vpm.mir.r, -1)
 
+    # US Jack
+    yield from bps.mv(vpm.mir.us_j, 0.5)
+    yield from bps.mv(vpm.mir.us_j, 0)
+
+    # DS InJack
+    yield from bps.mv(vpm.mir.ib_j, 0.5)
+    yield from bps.mv(vpm.mir.ib_j, 0)
+
+    # DS OutJack
+    yield from bps.mv(vpm.mir.ob_j, 0.5)
+    yield from bps.mv(vpm.mir.ob_j, 0)
+
 
 def test_HPM_slits():
     hpm = HPM(prefix="XF:09IDA-OP:1{", name="hpm", labels=["motors"])
     hpm.wait_for_connection(timeout=60.0)
     # horizontal gap
-    yield from bps.mv(hpm.slits.hg, -4)
+    yield from bps.mv(hpm.slits.hg, 0)
+    yield from bps.mv(hpm.slits.hg, 1.5)
     # vertical gap
-    yield from bps.mv(hpm.slits.vg, -4)
+    yield from bps.mv(hpm.slits.vg, 0)
+    yield from bps.mv(hpm.slits.vg, 1.5)
     # horizontal center
     yield from bps.mv(hpm.slits.hc, 0)
+    yield from bps.mv(hpm.slits.hc, 0.1)
     # vertical center
     yield from bps.mv(hpm.slits.vc, 0)
+    yield from bps.mv(hpm.slits.vc, 0.1)
 
 
 def test_VPM_slits():
     vpm = VPM(prefix="XF:09IDA-OP:1{", name="vpm", labels=["motors"])
     vpm.wait_for_connection(timeout=60.0)
     # horizontal gap
-    yield from bps.mv(vpm.slits.hg, -4)
+    yield from bps.mv(vpm.slits.hg, 0)
+    yield from bps.mv(vpm.slits.hg, 1.5)
     # vertical gap
-    yield from bps.mv(vpm.slits.vg, -4)
+    yield from bps.mv(vpm.slits.vg, 0)
+    yield from bps.mv(vpm.slits.vg, 1.5)
     # horizontal center
     yield from bps.mv(vpm.slits.hc, 0)
+    yield from bps.mv(vpm.slits.hc, 0.1)
     # vertical center
     yield from bps.mv(vpm.slits.vc, 0)
+    yield from bps.mv(vpm.slits.vc, 0.1)

@@ -100,11 +100,14 @@ class VPM(Device):
             "p": (EpicsMotor, "Mir:VPM-Ax:Pitch}Mtr", {}),
             "r": (EpicsMotor, "Mir:VPM-Ax:Roll}Mtr", {}),
             "y": (EpicsMotor, "Mir:VPM-Ax:TY}Mtr", {}),
-            "x": (EpicsMotor, "Mir:VPM-Ax:TX}Mtr", {}),
-            "us_b": (EpicsMotor, "Mir:VPM-Ax:UB}Mtr", {}),
-            "ds_b": (EpicsMotor, "Mir:VPM-Ax:DB}Mtr", {}),
-            "bend": (EpicsMotor, "Mir:VPM-Ax:Bnd}Mtr", {}),
-            "bend_off": (EpicsMotor, "Mir:VPM-Ax:BndOff}Mtr", {}),
+            "x": (EpicsMotorRO, "Mir:VPM-Ax:TX}Mtr", {}),
+            "yaw": (EpicsMotorRO, "Mir:VPM-Ax:Yaw}Mtr", {}),
+            "us_lt": (EpicsMotorRO, "Mir:VPM-Ax:XU}Mtr", {}),
+            "ds_lt": (EpicsMotorRO, "Mir:VPM-Ax:XD}Mtr", {}),
+            "us_b": (EpicsMotorRO, "Mir:VPM-Ax:UB}Mtr", {}),
+            "ds_b": (EpicsMotorRO, "Mir:VPM-Ax:DB}Mtr", {}),
+            "bend": (EpicsMotorRO, "Mir:VPM-Ax:Bnd}Mtr", {}),
+            "bend_off": (EpicsMotorRO, "Mir:VPM-Ax:BndOff}Mtr", {}),
         }
     )
 
@@ -159,7 +162,13 @@ class HPM(Device):
             "us_x": (EpicsMotor, "Mir:HPM-Ax:XU}Mtr", {}),
             "ds_x": (EpicsMotor, "Mir:HPM-Ax:XD}Mtr", {}),
             "x": (EpicsMotor, "Mir:HPM-Ax:TX}Mtr", {}),
-            "yaw": (EpicsMotor, "Mir:HPM-Ax:Yaw}Mtr", {}),
+            "yaw": (EpicsMotorRO, "Mir:HPM-Ax:Yaw}Mtr", {}),
+            "us_lt": (EpicsMotorRO, "Mir:HPM-Ax:XU}Mtr", {}),
+            "ds_lt": (EpicsMotorRO, "Mir:HPM-Ax:XD}Mtr", {}),
+            "us_b": (EpicsMotorRO, "Mir:HPM-Ax:UB}Mtr", {}),
+            "ds_b": (EpicsMotorRO, "Mir:HPM-Ax:DB}Mtr", {}),
+            "bend": (EpicsMotorRO, "Mir:HPM-Ax:Bnd}Mtr", {}),
+            "bend_off": (EpicsMotorRO, "Mir:HPM-Ax:BndOff}Mtr", {}),
         }
     )
 
