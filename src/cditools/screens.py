@@ -8,12 +8,11 @@ from ophyd import (
     ProsilicaDetector,
     ProsilicaDetectorCam,
     ROIPlugin,
-    ROIStatPlugin,
     StatsPluginV33,
     TransformPlugin,
 )
 from ophyd import Component as Cpt
-from ophyd.areadetector.plugins import PluginBase
+from ophyd.areadetector.plugins import PluginBase, ROIStatPlugin
 
 
 class ProsilicaCamBase(ProsilicaDetector):
