@@ -8,6 +8,7 @@ from ophyd import (
     ProsilicaDetector,
     ProsilicaDetectorCam,
     ROIPlugin,
+    EpicsSignal,
 )
 from ophyd import Component as Cpt
 from ophyd.areadetector.plugins import (
@@ -19,6 +20,7 @@ from ophyd.areadetector.plugins import (
 
 
 class ProsilicaCamBase(ProsilicaDetector):
+    wait_for_plugins = Cpt(EpicsSignal, "WaitForPlugins", string=True, kind="hinted")
     cam = Cpt(ProsilicaDetectorCam, "cam1:")  # VMB1????
     image = Cpt(ImagePlugin, "image1:")
     stats1 = Cpt(StatsPlugin, "Stats1:")
