@@ -10,7 +10,12 @@ from ophyd import (
     ROIPlugin,
 )
 from ophyd import Component as Cpt
-from ophyd.areadetector.plugins import PluginBase, ROIStatPlugin, StatsPlugin, TransformPlugin,
+from ophyd.areadetector.plugins import (
+    PluginBase,
+    ROIStatPlugin,
+    StatsPlugin,
+    TransformPlugin,
+)
 
 
 class ProsilicaCamBase(ProsilicaDetector):
