@@ -1,7 +1,12 @@
+from __future__ import annotations
+
+from typing import ClassVar
+
 import numpy as np
 from ophyd import Component as Cpt  # type: ignore[import-not-found]
 from ophyd import Device, EpicsMotor, PseudoPositioner, PseudoSingle
 from ophyd.pseudopos import pseudo_position_argument, real_position_argument
+
 
 class Energy(PseudoPositioner):
     bragg = Cpt(EpicsMotor, "Mono:HDCM-Ax:Bragg}Mtr")
@@ -62,7 +67,7 @@ class Energy(PseudoPositioner):
 
 class DCMBase(Device):
     pitch = Cpt(EpicsMotor, "Mono:HDCM-Ax:Pitch}Mtr")
-    fine = {
+    fine: ClassVar[dict] = {
         "fpitch": Cpt(EpicsMotor, "Mono:HDCM-Ax:FP}Mtr"),
         "roll": Cpt(EpicsMotor, "Mono:HDCM-Ax:Roll}Mtr"),
     }
