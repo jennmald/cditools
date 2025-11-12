@@ -1,27 +1,56 @@
 from __future__ import annotations
 
-from typing import Optional
-
+import numpy as np
 from ophyd import (
     CamBase,
+    DerivedSignal,
+    Device,
+    EpicsMotor,
+    EpicsSignal,
     ImagePlugin,
     ProsilicaDetector,
     ProsilicaDetectorCam,
     ROIPlugin,
-    EpicsSignal,
 )
 from ophyd import Component as Cpt
 from ophyd.areadetector.plugins import (
     PluginBase,
-    ROIStatPlugin,
+    ROIStatNPlugin_V25,
+    ROIStatPlugin_V35,
     StatsPlugin,
     TransformPlugin,
 )
+from ophyd.areadetector.trigger_mixins import SingleTrigger
+from ophyd.device import DynamicDeviceComponent
+
+
+class FullROIStats(ROIStatPlugin_V35):
+    rois = DynamicDeviceComponent(
+        {f"roi{j}": (ROIStatNPlugin_V25, f"{j}:", {}) for j in range(1, 9)}
+    )
+
+    def set_from_epics(self):
+        root = self
+        while root.parent is not None:
+            root = root.parent
+
+        for k in self.rois.component_names:
+            roi = getattr(self.rois, k)
+            in_use = roi.use.get()
+            if in_use == "Yes":
+                roi.kind = "normal"
+            else:
+                roi.kind = "omitted"
+                continue
+            epics_name = roi.name_.get()
+            roi.name = f"{root.name}_{epics_name}"
+            for cpt in roi.walk_signals():
+                cpt.item.name = f"{root.name}_{epics_name}_{cpt.dotted_name}"
 
 
 class ProsilicaCamBase(ProsilicaDetector):
     wait_for_plugins = Cpt(EpicsSignal, "WaitForPlugins", string=True, kind="hinted")
-    cam = Cpt(ProsilicaDetectorCam, "cam1:")  # VMB1????
+    cam = Cpt(ProsilicaDetectorCam, "cam1:")
     image = Cpt(ImagePlugin, "image1:")
     stats1 = Cpt(StatsPlugin, "Stats1:")
     stats2 = Cpt(StatsPlugin, "Stats2:")
@@ -33,8 +62,8 @@ class ProsilicaCamBase(ProsilicaDetector):
     roi2 = Cpt(ROIPlugin, "ROI2:")
     roi3 = Cpt(ROIPlugin, "ROI3:")
     roi4 = Cpt(ROIPlugin, "ROI4:")
-    roistat1 = Cpt(ROIStatPlugin, "ROISTAT1:")
-    _default_plugin_graph: Optional[dict[PluginBase, CamBase | PluginBase]] = None
+    roistat1 = Cpt(FullROIStats, "ROIStat1:")
+    _default_plugin_graph: dict[PluginBase, CamBase | PluginBase] | None = None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -44,7 +73,7 @@ class ProsilicaCamBase(ProsilicaDetector):
     @property
     def default_plugin_graph(
         self,
-    ) -> Optional[dict[PluginBase, CamBase | PluginBase]]:
+    ) -> dict[PluginBase, CamBase | PluginBase] | None:
         return self._default_plugin_graph
 
     def _stage_plugin_graph(self, plugin_graph: dict[PluginBase, CamBase | PluginBase]):
@@ -59,41 +88,90 @@ class ProsilicaCamBase(ProsilicaDetector):
         return super().stage()
 
 
-class StandardProsilicaCam(ProsilicaCamBase):
+class StandardProsilicaCam(SingleTrigger, ProsilicaCamBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.stage_sigs[self.cam.wait_for_plugins] = "No"
         self._default_plugin_graph = {
-            self.cam: self.roistat1
-        }  # ask tom if this should be reversed
+            self.image: self.cam,
+            self.stats1: self.cam,
+            self.stats2: self.cam,
+            self.stats3: self.cam,
+            self.stats4: self.cam,
+            self.stats5: self.cam,
+            self.trans1: self.cam,
+            self.roi1: self.cam,
+            self.roi2: self.cam,
+            self.roi3: self.cam,
+            self.roi4: self.cam,
+            self.roistat1: self.cam,
+        }
 
     def stage(self):
         return super().stage()
 
-    # def insert_screen(self, state: float):
-    #     if state > 0.0:  # should this be != to zero?
-    #         self.fs.y.set(0.0)  # insert screen
 
-    # def remove_screen(self, state: float):
-    #     if (
-    #         state == 0.0
-    #     ):  # 25 mm is the current out value, could change after operations
-    #         self.fs.y.set(25.0)  # remove screen
+class ScreenState(DerivedSignal):
+    def __init__(self, *args, in_position=0.0, out_position=25.0, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.in_position = in_position
+        self.out_position = out_position
 
-    # possible wrapper for after scan cleanup
-    # def set_screen(self, state: float):
-    #     # the screen is "in" (in the beam) when state is 1.0
-    #     if state == 0.0:
-    #         pass
-    #     # otherwise screen is "out" (out of the beam), for normal operations
-    #     elif state > 0.0:
-    #         pass
-    #     else:
-    #         raise ValueError(f"Invalid state {state} for VPM screen.")
-    #     #return super().set(state)
+    def forward(self, value):
+        msg = "Forward method is not implemented."
+        raise NotImplementedError(msg)
+
+    def inverse(self, value):
+        if np.isclose(value, self.in_position, atol=1):
+            return "in"
+        if value > self.out_position:
+            return "out"
+        return "invalid"
 
 
-cam_A1 = StandardProsilicaCam("XF:09IDA-OP:1{DM-Cam:1}", name="cam_A1")
-cam_A2 = StandardProsilicaCam("XF:09IDA-BI:1{WBStop-Cam:2}", name="cam_A2")
-cam_A3 = StandardProsilicaCam("XF:09IDB-BI:1{VPM-Cam:3}", name="cam_A3")
-cam_A4 = StandardProsilicaCam("XF:09IDB-BI:1{HPM-Cam:4}", name="cam_A4")
+class StandardScreen(Device):
+    mtr = Cpt(EpicsMotor, "")
+    state = Cpt(
+        ScreenState,
+        derived_from="mtr.user_readback",
+        in_position=0.0,
+        out_position=25.0,
+    )
+
+    def set(
+        self,
+        new_position,
+        *,
+        timeout: float | None = None,
+        moved_cb=None,
+        wait: bool | None = None,
+    ):
+        if new_position == "in":
+            return self.mtr.set(
+                self.state.in_position, timeout=timeout, moved_cb=moved_cb, wait=wait
+            )
+        if new_position == "out":
+            return self.mtr.set(
+                self.state.out_position, timeout=timeout, moved_cb=moved_cb, wait=wait
+            )
+        msg = f"Invalid position '{new_position}'. Use 'in' or 'out'."
+        raise ValueError(msg)
+
+
+def set_roiN_kinds(cam):
+    cam.roistat1.rois.kind = "normal"
+    for roi_name in cam.roistat1.rois.component_names:
+        roi = getattr(cam.roistat1.rois, roi_name)
+        roi.kind = "normal"
+        for k in ("bgd_width", "name_", "use", "size", "min_"):
+            getattr(roi, k).kind = "config"
+        for k in ("max_value", "min_value", "mean_value", "net"):
+            getattr(roi, k).kind = "normal"
+        for k in ("total",):
+            getattr(roi, k).kind = "hinted"
+        for k in ("reset",):
+            getattr(roi, k).kind = "omitted"
+        for k in roi.component_names:
+            if k.startswith("ts"):
+                getattr(roi, k).kind = "omitted"
+    cam.roistat1.set_from_epics()
+    return cam

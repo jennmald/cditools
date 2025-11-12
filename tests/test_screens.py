@@ -6,7 +6,7 @@ from cditools.screens import StandardProsilicaCam
 
 
 def test_cam_A1():
-    cam_A1 = StandardProsilicaCam("XF:09IDA-OP:1{DM-Cam:1}", name="cam_A1")
+    cam_A1 = StandardProsilicaCam("XF:09IDA-BI{DM:1-Cam:1}", name="cam_A1")
     cam_A1.wait_for_connection(timeout=60.0)
     yield from bp.count([cam_A1], 1)
 
