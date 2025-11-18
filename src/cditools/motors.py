@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import ClassVar
+
 import numpy as np
 from ophyd import Component as Cpt  # type: ignore[import-not-found]
 from ophyd import Device, EpicsMotor, PseudoPositioner, PseudoSingle
@@ -11,6 +13,9 @@ from ophyd.pseudopos import (
 
 
 class EpicsMotorRO(EpicsMotor):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
     def move(self, *args, **kwargs):  # noqa: ARG002
         msg = f"{self.name} is read-only and cannot be moved."
         raise PermissionError(msg)
@@ -26,14 +31,6 @@ class EpicsMotorRO(EpicsMotor):
     def set_position(self, *args, **kwargs):  # noqa: ARG002
         msg = f"{self.name} is read-only and its position cannot be set."
         raise PermissionError(msg)
-
-    # Optionally, lock write PVs if desired
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Disable write access to underlying signals
-        for _sig_name, sig in self.signal_names.items():
-            if hasattr(sig, "put"):
-                sig.put = self._readonly_put
 
     def _readonly_put(self, *args, **kwargs):  # noqa: ARG002
         msg = f"{self.name} is read-only and cannot write PVs."
@@ -56,6 +53,93 @@ class DM1(Device):
         }
     )
     filt = Cpt(EpicsMotor, "Fltr:DM1-Ax:Y}Mtr")
+
+
+class DMM(Device):
+    h = Cpt(EpicsMotor, "Mono:DMM-Ax:TX}Mtr")
+    v = Cpt(EpicsMotor, "Mono:DMM-Ax:TY}Mtr")
+    bragg = Cpt(EpicsMotor, "Mono:DMM-Ax:Bragg}Mtr")
+    mlm1 = DDC(
+        {
+            "r": (EpicsMotor, "Mono:DMM-Ax:Roll}Mtr", {}),
+            "fr": (EpicsMotor, "Mono:DMM-Ax:FR}Mtr", {}),
+        }
+    )
+    mgap = Cpt(EpicsMotor, "Mono:DMM-Ax:HG}Mtr")
+    mlm2 = DDC(
+        {
+            "p": (EpicsMotor, "Mono:DMM-Ax:Pitch}Mtr", {}),
+            "fp": (EpicsMotor, "Mono:DMM-Ax:FP}Mtr", {}),
+        }
+    )
+    zoff = Cpt(EpicsMotor, "Mono:DMM-Ax:TZ}Mtr")
+
+
+class DCMBase(Device):
+    pitch = Cpt(EpicsMotor, "Mono:HDCM-Ax:Pitch}Mtr")
+    fine: ClassVar[dict] = {
+        "fpitch": Cpt(EpicsMotor, "Mono:HDCM-Ax:FP}Mtr"),
+        "roll": Cpt(EpicsMotor, "Mono:HDCM-Ax:Roll}Mtr"),
+    }
+    h = Cpt(EpicsMotor, "Mono:HDCM-Ax:TX}Mtr")
+    v = Cpt(EpicsMotor, "Mono:HDCM-Ax:TY}Mtr")
+
+
+class Energy(PseudoPositioner):
+    bragg = Cpt(EpicsMotor, "Mono:HDCM-Ax:Bragg}Mtr")
+    cgap = Cpt(EpicsMotor, "Mono:HDCM-Ax:HG}Mtr")
+    # Synthetic Axis
+    energy = Cpt(PseudoSingle, equ="KeV")
+
+    # Energy "limits"
+    _low = 5.0  # TODO: CHECK THIS VALUE
+    _high = 15.0  # TODO: CHECK THIS VALUE
+
+    # Set up constants
+    Xoffset = 20.0  # mm
+    d_111 = 3.1286911960950756
+    ANG_OVER_KEV = 12.3984
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.energy.readback.name = "energy"
+        self.energy.setpoint.name = "energy_setpoint"
+
+    def energy_to_positions(self, target_energy: float):
+        """Compute undulator and mono positions given a target energy
+
+        Parameters
+        ----------
+        target_energy : float
+            Target energy in keV
+
+        Returns
+        -------
+        bragg : float
+            The angle to set the monocromotor in radians
+        gap : float
+            The gap position in millimeters
+        """
+
+        # Calculate Bragg RBV
+        bragg = np.arcsin((self.ANG_OVER_KEV / target_energy) / (2 * self.d_111))
+
+        # Calculate C2X
+        gap = self.Xoffset / 2 / np.cos(bragg)
+
+        return bragg, gap
+
+    @pseudo_position_argument
+    def forward(self, p_pos):
+        energy = p_pos.energy  # energy assumed in keV
+        bragg, gap = self.energy_to_positions(energy)
+        return self.RealPosition(bragg=np.rad2deg(bragg), cgap=gap)
+
+    @real_position_argument
+    def inverse(self, r_pos):
+        bragg = np.deg2rad(r_pos.bragg)
+        e = self.ANG_OVER_KEV / (2 * self.d_111 * np.sin(bragg))
+        return self.PseudoPosition(energy=float(e))
 
 
 class VPM(Device):
@@ -165,6 +249,7 @@ class DM3(Device):
         }
     )
 
+
 class VKB(Device):
     slit = DDC(
         {
@@ -222,6 +307,7 @@ class HKB(Device):
         }
     )
 
+
 class KB(Device):
     vkb = Cpt(VKB, "")
     hkb = Cpt(HKB, "")
@@ -231,88 +317,6 @@ class KB(Device):
             "y": (EpicsMotor, "Wnd:Exit-Ax:TY}Mtr", {}),
         }
     )
-
-
-class DMM(Device):
-    h = Cpt(EpicsMotor, "Mono:DMM-Ax:TX}Mtr")
-    v = Cpt(EpicsMotor, "Mono:DMM-Ax:TY}Mtr")
-    bragg = Cpt(EpicsMotor, "Mono:DMM-Ax:Bragg}Mtr")
-    mlm1 = DDC(
-        {
-            "r": (EpicsMotor, "Mono:DMM-Ax:Roll}Mtr", {}),
-            "fr": (EpicsMotor, "Mono:DMM-Ax:FR}Mtr", {}),
-        }
-    )
-    mgap = Cpt(EpicsMotor, "Mono:DMM-Ax:HG}Mtr")
-    mlm2 = DDC(
-        {
-            "p": (EpicsMotor, "Mono:DMM-Ax:Pitch}Mtr", {}),
-            "fp": (EpicsMotor, "Mono:DMM-Ax:FP}Mtr", {}),
-        }
-    )
-    zoff = Cpt(EpicsMotor, "Mono:DMM-Ax:TZ}Mtr")
-
-
-class DCMBase(Device):
-    pitch = Cpt(EpicsMotor, "Mono:HDCM-Ax:Pitch}Mtr")
-    fine = {  # noqa: RUF012
-        "fpitch": Cpt(EpicsMotor, "Mono:HDCM-Ax:FP}Mtr"),
-        "roll": Cpt(EpicsMotor, "Mono:HDCM-Ax:Roll}Mtr"),
-    }
-    h = Cpt(EpicsMotor, "Mono:HDCM-Ax:TX}Mtr")
-    v = Cpt(EpicsMotor, "Mono:HDCM-Ax:TY}Mtr")
-
-
-class Energy(PseudoPositioner):
-    bragg = Cpt(EpicsMotor, "Mono:HDCM-Ax:Bragg}Mtr")
-    cgap = Cpt(EpicsMotor, "Mono:HDCM-Ax:HG}Mtr")
-    # Synthetic Axis
-    energy = Cpt(PseudoSingle, equ="KeV")
-
-    # Energy "limits"
-    _low = 5.0  # TODO: CHECK THIS VALUE
-    _high = 15.0  # TODO: CHECK THIS VALUE
-
-    # Set up constants
-    Xoffset = 20.0  # mm
-    d_111 = 3.1286911960950756
-    ANG_OVER_KEV = 12.3984
-
-    def energy_to_positions(self, target_energy: float):
-        """Compute undulator and mono positions given a target energy
-
-        Parameters
-        ----------
-        target_energy : float
-            Target energy in keV
-
-        Returns
-        -------
-        bragg : float
-            The angle to set the monocromotor in radians
-        gap : float
-            The gap position in millimeters
-        """
-
-        # Calculate Bragg RBV
-        bragg = np.arcsin((self.ANG_OVER_KEV / target_energy) / (2 * self.d_111))
-
-        # Calculate C2X
-        gap = self.Xoffset / 2 / np.cos(bragg)
-
-        return bragg, gap
-
-    @pseudo_position_argument
-    def forward(self, p_pos):
-        energy = p_pos.energy  # energy assumed in keV
-        bragg, gap = self.energy_to_positions(energy)
-        return self.RealPosition(bragg=np.rad2deg(bragg), cgap=gap)
-
-    @real_position_argument
-    def inverse(self, r_pos):
-        bragg = np.deg2rad(r_pos.bragg)
-        e = self.ANG_OVER_KEV / (2 * self.d_111 * np.sin(bragg))
-        return self.PseudoPosition(energy=float(e))
 
 
 class DM4(Device):
