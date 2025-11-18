@@ -272,7 +272,7 @@ class VKB(Device):
     )
     fs = DDC(
         {
-            "y": (EpicsMotor, "FS:KBv-Ax:FS}Mtr", {}),
+            "y": (EpicsMotor, "Mir:KBv-Ax:FS}Mtr", {}),
         }
     )
 
