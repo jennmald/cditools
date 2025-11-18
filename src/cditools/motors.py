@@ -139,6 +139,100 @@ class DM2(Device):
     foil = Cpt(EpicsMotor, "IM:DM2-Ax:Y}Mtr")
 
 
+class DM3(Device):
+    slit = DDC(
+        {
+            "ib": (EpicsMotor, "Slt:DM3-Ax:I}Mtr", {}),
+            "ob": (EpicsMotor, "Slt:DM3-Ax:O}Mtr", {}),
+            "bb": (EpicsMotor, "Slt:DM3-Ax:B}Mtr", {}),
+            "tb": (EpicsMotor, "Slt:DM3-Ax:T}Mtr", {}),
+            "hg": (EpicsMotor, "Slt:DM3-Ax:HG}Mtr", {}),
+            "hc": (EpicsMotor, "Slt:DM3-Ax:HC}Mtr", {}),
+            "vg": (EpicsMotor, "Slt:DM3-Ax:VG}Mtr", {}),
+            "vc": (EpicsMotor, "Slt:DM3-Ax:VC}Mtr", {}),
+        }
+    )
+    bpm = DDC(
+        {
+            "x": (EpicsMotor, "BPM:DM3-Ax:TX}Mtr", {}),
+            "y": (EpicsMotor, "BPM:DM3-Ax:TY}Mtr", {}),
+            "foil": (EpicsMotor, "BPM:DM3-Ax:Foil}Mtr", {}),
+        }
+    )
+    fs = DDC(
+        {
+            "y": (EpicsMotor, "FS:DM3-Ax:FS}Mtr", {}),
+        }
+    )
+
+class VKB(Device):
+    slit = DDC(
+        {
+            "hg": (EpicsMotor, "Slt:KBv-Ax:HG}Mtr", {}),
+            "hc": (EpicsMotor, "Slt:KBv-Ax:HC}Mtr", {}),
+            "vg": (EpicsMotor, "Slt:KBv-Ax:VG}Mtr", {}),
+            "vc": (EpicsMotor, "Slt:KBv-Ax:VC}Mtr", {}),
+        }
+    )
+    mir = DDC(
+        {
+            "us_j": (EpicsMotor, "Mir:KBv-Ax:YUC}Mtr", {}),
+            "ib_j": (EpicsMotor, "Mir:KBv-Ax:YDI}Mtr", {}),
+            "ob_j": (EpicsMotor, "Mir:KBv-Ax:YDO}Mtr", {}),
+            "yaw": (EpicsMotor, "Mir:KBv-Ax:Yaw}Mtr", {}),
+            "r": (EpicsMotor, "Mir:KBv-Ax:Roll}Mtr", {}),
+            "y": (EpicsMotor, "Mir:KBv-Ax:TY}Mtr", {}),
+            "x": (EpicsMotor, "Mir:KBv-Ax:TX}Mtr", {}),
+            "z": (EpicsMotor, "Mir:KBv-Ax:TZ}Mtr", {}),
+            "p": (EpicsMotor, "Mir:KBv-Ax:Pitch}Mtr", {}),
+        }
+    )
+    fs = DDC(
+        {
+            "y": (EpicsMotor, "Mir:KBv-Ax:FS}Mtr", {}),
+        }
+    )
+
+
+class HKB(Device):
+    slit = DDC(
+        {
+            "hg": (EpicsMotor, "Slt:KBh-Ax:HG}Mtr", {}),
+            "hc": (EpicsMotor, "Slt:KBh-Ax:HC}Mtr", {}),
+            "vg": (EpicsMotor, "Slt:KBh-Ax:VG}Mtr", {}),
+            "vc": (EpicsMotor, "Slt:KBh-Ax:VC}Mtr", {}),
+        }
+    )
+    mir = DDC(
+        {
+            "us_j": (EpicsMotor, "Mir:KBh-Ax:YUC}Mtr", {}),
+            "ib_j": (EpicsMotor, "Mir:KBh-Ax:YDI}Mtr", {}),
+            "ob_j": (EpicsMotor, "Mir:KBh-Ax:YDO}Mtr", {}),
+            "yaw": (EpicsMotor, "Mir:KBh-Ax:Yaw}Mtr", {}),
+            "r": (EpicsMotor, "Mir:KBh-Ax:Roll}Mtr", {}),
+            "y": (EpicsMotor, "Mir:KBh-Ax:TY}Mtr", {}),
+            "x": (EpicsMotor, "Mir:KBh-Ax:TX}Mtr", {}),
+            "z": (EpicsMotor, "Mir:KBh-Ax:TZ}Mtr", {}),
+            "p": (EpicsMotor, "Mir:KBh-Ax:Pitch}Mtr", {}),
+        }
+    )
+    fs = DDC(
+        {
+            "y": (EpicsMotor, "Mir:KBh-Ax:FS}Mtr", {}),
+        }
+    )
+
+class KB(Device):
+    vkb = Cpt(VKB, "")
+    hkb = Cpt(HKB, "")
+    win = DDC(
+        {
+            "x": (EpicsMotor, "Wnd:Exit-Ax:TX}Mtr", {}),
+            "y": (EpicsMotor, "Wnd:Exit-Ax:TY}Mtr", {}),
+        }
+    )
+
+
 class DMM(Device):
     h = Cpt(EpicsMotor, "Mono:DMM-Ax:TX}Mtr")
     v = Cpt(EpicsMotor, "Mono:DMM-Ax:TY}Mtr")
@@ -219,102 +313,6 @@ class Energy(PseudoPositioner):
         bragg = np.deg2rad(r_pos.bragg)
         e = self.ANG_OVER_KEV / (2 * self.d_111 * np.sin(bragg))
         return self.PseudoPosition(energy=float(e))
-
-
-class DM3(Device):
-    slit = DDC(
-        {
-            "ib": (EpicsMotor, "Slt:DM3-Ax:I}Mtr", {}),
-            "ob": (EpicsMotor, "Slt:DM3-Ax:O}Mtr", {}),
-            "bb": (EpicsMotor, "Slt:DM3-Ax:B}Mtr", {}),
-            "tb": (EpicsMotor, "Slt:DM3-Ax:T}Mtr", {}),
-            "hg": (EpicsMotor, "Slt:DM3-Ax:HG}Mtr", {}),
-            "hc": (EpicsMotor, "Slt:DM3-Ax:HC}Mtr", {}),
-            "vg": (EpicsMotor, "Slt:DM3-Ax:VG}Mtr", {}),
-            "vc": (EpicsMotor, "Slt:DM3-Ax:VC}Mtr", {}),
-        }
-    )
-    bpm = DDC(
-        {
-            "x": (EpicsMotor, "BPM:DM3-Ax:TX}Mtr", {}),
-            "y": (EpicsMotor, "BPM:DM3-Ax:TY}Mtr", {}),
-            "foil": (EpicsMotor, "BPM:DM3-Ax:Foil}Mtr", {}),
-        }
-    )
-    fs = DDC(
-        {
-            "y": (EpicsMotor, "FS:DM3-Ax:FS}Mtr", {}),
-        }
-    )
-
-
-class VKB(Device):
-    slit = DDC(
-        {
-            "hg": (EpicsMotor, "Slt:KBv-Ax:HG}Mtr", {}),
-            "hc": (EpicsMotor, "Slt:KBv-Ax:HC}Mtr", {}),
-            "vg": (EpicsMotor, "Slt:KBv-Ax:VG}Mtr", {}),
-            "vc": (EpicsMotor, "Slt:KBv-Ax:VC}Mtr", {}),
-        }
-    )
-    mir = DDC(
-        {
-            "us_j": (EpicsMotor, "Mir:KBv-Ax:YUC}Mtr", {}),
-            "ib_j": (EpicsMotor, "Mir:KBv-Ax:YDI}Mtr", {}),
-            "ob_j": (EpicsMotor, "Mir:KBv-Ax:YDO}Mtr", {}),
-            "yaw": (EpicsMotor, "Mir:KBv-Ax:Yaw}Mtr", {}),
-            "r": (EpicsMotor, "Mir:KBv-Ax:Roll}Mtr", {}),
-            "y": (EpicsMotor, "Mir:KBv-Ax:TY}Mtr", {}),
-            "x": (EpicsMotor, "Mir:KBv-Ax:TX}Mtr", {}),
-            "z": (EpicsMotor, "Mir:KBv-Ax:TZ}Mtr", {}),
-            "p": (EpicsMotor, "Mir:KBv-Ax:Pitch}Mtr", {}),
-        }
-    )
-    fs = DDC(
-        {
-            "y": (EpicsMotor, "Mir:KBv-Ax:FS}Mtr", {}),
-        }
-    )
-
-
-class HKB(Device):
-    slit = DDC(
-        {
-            "hg": (EpicsMotor, "Slt:KBh-Ax:HG}Mtr", {}),
-            "hc": (EpicsMotor, "Slt:KBh-Ax:HC}Mtr", {}),
-            "vg": (EpicsMotor, "Slt:KBh-Ax:VG}Mtr", {}),
-            "vc": (EpicsMotor, "Slt:KBh-Ax:VC}Mtr", {}),
-        }
-    )
-    mir = DDC(
-        {
-            "us_j": (EpicsMotor, "Mir:KBh-Ax:YUC}Mtr", {}),
-            "ib_j": (EpicsMotor, "Mir:KBh-Ax:YDI}Mtr", {}),
-            "ob_j": (EpicsMotor, "Mir:KBh-Ax:YDO}Mtr", {}),
-            "yaw": (EpicsMotor, "Mir:KBh-Ax:Yaw}Mtr", {}),
-            "r": (EpicsMotor, "Mir:KBh-Ax:Roll}Mtr", {}),
-            "y": (EpicsMotor, "Mir:KBh-Ax:TY}Mtr", {}),
-            "x": (EpicsMotor, "Mir:KBh-Ax:TX}Mtr", {}),
-            "z": (EpicsMotor, "Mir:KBh-Ax:TZ}Mtr", {}),
-            "p": (EpicsMotor, "Mir:KBh-Ax:Pitch}Mtr", {}),
-        }
-    )
-    fs = DDC(
-        {
-            "y": (EpicsMotor, "Mir:KBh-Ax:FS}Mtr", {}),
-        }
-    )
-
-
-class KB(Device):
-    vkb = Cpt(VKB, "")
-    hkb = Cpt(HKB, "")
-    win = DDC(
-        {
-            "x": (EpicsMotor, "Wnd:Exit-Ax:TX}Mtr", {}),
-            "y": (EpicsMotor, "Wnd:Exit-Ax:TY}Mtr", {}),
-        }
-    )
 
 
 class DM4(Device):
