@@ -89,7 +89,7 @@ class Energy(PseudoPositioner):
     bragg = Cpt(EpicsMotor, "Mono:HDCM-Ax:Bragg}Mtr")
     cgap = Cpt(EpicsMotor, "Mono:HDCM-Ax:HG}Mtr")
     # Synthetic Axis
-    energy = Cpt(PseudoSingle, equ="KeV")
+    energy = Cpt(PseudoSingle, egu="KeV")
 
     # Energy "limits"
     _low = 5.0  # TODO: CHECK THIS VALUE
