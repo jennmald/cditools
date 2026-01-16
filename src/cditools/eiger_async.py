@@ -31,6 +31,7 @@ from ophyd_async.core import (
     SignalR,
     SignalRW,
     StrictEnum,
+    SubsetEnum,
     TriggerInfo,
     observe_value,
 )
@@ -100,7 +101,8 @@ class EigerDocumentComposer:
                 yield bundle.compose_stream_datum(indices)
 
 
-class EigerTriggerMode(StrictEnum):
+# TODO - add extra options in eiger2 and revert to StrictEnum
+class EigerTriggerMode(SubsetEnum):
     """Trigger modes for the Eiger detector.
 
     See https://areadetector.github.io/areaDetector/ADEiger/eiger.html#implementation-of-standard-driver-parameters
@@ -133,7 +135,8 @@ class EigerROIMode(StrictEnum):
     _4M = "4M"
 
 
-class EigerCompressionAlgo(StrictEnum):
+# TODO - add extra options in eiger2 and revert to StrictEnum
+class EigerCompressionAlgo(SubsetEnum):
     """Compression algorithms for the Eiger detector.
 
     See https://areadetector.github.io/areaDetector/ADEiger/eiger.html#readout-setup
@@ -223,11 +226,6 @@ class EigerDriverIO(ADBaseIO, NDFileIO):
     error: A[SignalR[str], PvSuffix("Error_RBV")]
     temp0: A[SignalR[float], PvSuffix("Temp0_RBV")]
     humid0: A[SignalR[float], PvSuffix("Humid0_RBV")]
-    link0: A[SignalR[str], PvSuffix("Link0_RBV")]
-    link1: A[SignalR[str], PvSuffix("Link1_RBV")]
-    link2: A[SignalR[str], PvSuffix("Link2_RBV")]
-    link3: A[SignalR[str], PvSuffix("Link3_RBV")]
-    dcu_buffer_free: A[SignalR[float], PvSuffix("DCUBufferFree_RBV")]
 
     # Acquisition Setup
     photon_energy: A[SignalRW[float], PvSuffix.rbv("PhotonEnergy")]
@@ -300,7 +298,6 @@ class EigerDriverIO(ADBaseIO, NDFileIO):
     file_perms: A[SignalRW[float], PvSuffix.rbv("FilePerms")]
     fw_free: A[SignalR[float], PvSuffix("FWFree_RBV")]
     fw_auto_remove: A[SignalRW[bool], PvSuffix.rbv("FWAutoRemove")]
-    fw_clear: A[SignalRW[float], PvSuffix("FWClear")]
     fw_nimgs_per_file: A[SignalRW[int], PvSuffix.rbv("FWNImagesPerFile")]
 
 
