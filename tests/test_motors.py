@@ -10,7 +10,6 @@ from ophyd import Device, EpicsSignal
 
 from cditools.motors import (
     BCU,
-    DCM,
     DM1,
     DM2,
     DM3,
@@ -20,6 +19,7 @@ from cditools.motors import (
     HPM,
     KB,
     VPM,
+    DCMBase,
 )
 
 EpicsSignal.set_defaults(timeout=20.0, connection_timeout=20.0, write_timeout=20.0)
@@ -69,7 +69,7 @@ def test_motors_can_connect(black_hole_ioc: None) -> None:
     dmm = DMM(prefix="XF:09IDA-OP:1{", name="dmm")
     dmm.wait_for_connection(timeout=60.0)
 
-    dcm = DCM(prefix="XF:09IDA-OP:1{", name="dcm")
+    dcm = DCMBase(prefix="XF:09IDA-OP:1{", name="dcm")
     dcm.wait_for_connection(timeout=60.0)
 
     dm3 = DM3(prefix="XF:09IDB-OP:1{", name="dm3")
@@ -86,3 +86,10 @@ def test_motors_can_connect(black_hole_ioc: None) -> None:
 
     bcu = BCU(prefix="XF:09IDC-OP:1{", name="bcu")
     bcu.wait_for_connection(timeout=60.0)
+
+
+# def test_DCM_scan():
+#     dcm = DCMBase(prefix="XF:09IDA-OP:1{", name="dcm", labels=["motors"])
+#     dcm.wait_for_connection(timeout=60.0)
+#     yield from scan([], dcm.bragg, -0.05, 0.05, 2)
+#     yield from scan([], dcm.c2.p, -0.01, 0.01, 2)

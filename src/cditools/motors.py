@@ -1,8 +1,40 @@
 from __future__ import annotations
 
+from typing import ClassVar
+
+import numpy as np
 from ophyd import Component as Cpt  # type: ignore[import-not-found]
-from ophyd import Device, EpicsMotor
+from ophyd import Device, EpicsMotor, PseudoPositioner, PseudoSingle
 from ophyd import DynamicDeviceComponent as DDC
+from ophyd.pseudopos import (
+    pseudo_position_argument,
+    real_position_argument,
+)
+
+
+class EpicsMotorRO(EpicsMotor):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def move(self, *args, **kwargs):  # noqa: ARG002
+        msg = f"{self.name} is read-only and cannot be moved."
+        raise PermissionError(msg)
+
+    def stop(self, *args, **kwargs):  # noqa: ARG002
+        msg = f"{self.name} is read-only and cannot be stopped manually."
+        raise PermissionError(msg)
+
+    def set(self, *args, **kwargs):  # noqa: ARG002
+        msg = f"{self.name} is read-only and cannot be set."
+        raise PermissionError(msg)
+
+    def set_position(self, *args, **kwargs):  # noqa: ARG002
+        msg = f"{self.name} is read-only and its position cannot be set."
+        raise PermissionError(msg)
+
+    def _readonly_put(self, *args, **kwargs):  # noqa: ARG002
+        msg = f"{self.name} is read-only and cannot write PVs."
+        raise PermissionError(msg)
 
 
 class DM1(Device):
@@ -21,80 +53,6 @@ class DM1(Device):
         }
     )
     filt = Cpt(EpicsMotor, "Fltr:DM1-Ax:Y}Mtr")
-
-
-class VPM(Device):
-    fs = DDC(
-        {
-            "y": (EpicsMotor, "FS:VPM-Ax:Y}Mtr", {}),
-        }
-    )
-    slit = DDC(
-        {
-            "hg": (EpicsMotor, "Slt:VPM-Ax:HG}Mtr", {}),
-            "hc": (EpicsMotor, "Slt:VPM-Ax:HC}Mtr", {}),
-            "vg": (EpicsMotor, "Slt:VPM-Ax:VG}Mtr", {}),
-            "vc": (EpicsMotor, "Slt:VPM-Ax:VC}Mtr", {}),
-        }
-    )
-    mir = DDC(
-        {
-            "us_j": (EpicsMotor, "Mir:VPM-Ax:YUC}Mtr", {}),
-            "ib_j": (EpicsMotor, "Mir:VPM-Ax:YDI}Mtr", {}),
-            "ob_j": (EpicsMotor, "Mir:VPM-Ax:YDO}Mtr", {}),
-            "p": (EpicsMotor, "Mir:VPM-Ax:Pitch}Mtr", {}),
-            "r": (EpicsMotor, "Mir:VPM-Ax:Roll}Mtr", {}),
-            "y": (EpicsMotor, "Mir:VPM-Ax:TY}Mtr", {}),
-            "x": (EpicsMotor, "Mir:VPM-Ax:TX}Mtr", {}),
-            "us_b": (EpicsMotor, "Mir:VPM-Ax:UB}Mtr", {}),
-            "ds_b": (EpicsMotor, "Mir:VPM-Ax:DB}Mtr", {}),
-            "bend": (EpicsMotor, "Mir:VPM-Ax:Bnd}Mtr", {}),
-            "bend_off": (EpicsMotor, "Mir:VPM-Ax:BndOff}Mtr", {}),
-        }
-    )
-
-
-class HPM(Device):
-    fs = DDC(
-        {
-            "y": (EpicsMotor, "FS:HPM-Ax:Y}Mtr", {}),
-        }
-    )
-    slit = DDC(
-        {
-            "hg": (EpicsMotor, "Slt:HPM-Ax:HG}Mtr", {}),
-            "hc": (EpicsMotor, "Slt:HPM-Ax:HC}Mtr", {}),
-            "vg": (EpicsMotor, "Slt:HPM-Ax:VG}Mtr", {}),
-            "vc": (EpicsMotor, "Slt:HPM-Ax:VC}Mtr", {}),
-        }
-    )
-    mir = DDC(
-        {
-            "us_j": (EpicsMotor, "Mir:HPM-Ax:YUC}Mtr", {}),
-            "ib_j": (EpicsMotor, "Mir:HPM-Ax:YDI}Mtr", {}),
-            "ob_j": (EpicsMotor, "Mir:HPM-Ax:YDO}Mtr", {}),
-            "p": (EpicsMotor, "Mir:HPM-Ax:Pitch}Mtr", {}),
-            "r": (EpicsMotor, "Mir:HPM-Ax:Roll}Mtr", {}),
-            "y": (EpicsMotor, "Mir:HPM-Ax:TY}Mtr", {}),
-            "us_b": (EpicsMotor, "Mir:HPM-Ax:UB}Mtr", {}),
-            "ds_b": (EpicsMotor, "Mir:HPM-Ax:DB}Mtr", {}),
-            "bend": (EpicsMotor, "Mir:HPM-Ax:Bnd}Mtr", {}),
-            "bend_off": (EpicsMotor, "Mir:HPM-Ax:BndOff}Mtr", {}),
-            "us_x": (EpicsMotor, "Mir:HPM-Ax:XU}Mtr", {}),
-            "ds_x": (EpicsMotor, "Mir:HPM-Ax:XD}Mtr", {}),
-            "x": (EpicsMotor, "Mir:HPM-Ax:TX}Mtr", {}),
-            "yaw": (EpicsMotor, "Mir:HPM-Ax:Yaw}Mtr", {}),
-        }
-    )
-
-
-class DM2(Device):
-    fs = DDC(
-        {
-            "y": (EpicsMotor, "FS:DM2-Ax:Y}Mtr", {}),
-        }
-    )
-    foil = Cpt(EpicsMotor, "IM:DM2-Ax:Y}Mtr")
 
 
 class DMM(Device):
@@ -117,18 +75,152 @@ class DMM(Device):
     zoff = Cpt(EpicsMotor, "Mono:DMM-Ax:TZ}Mtr")
 
 
-class DCM(Device):
+class DCMBase(Device):
+    pitch = Cpt(EpicsMotor, "Mono:HDCM-Ax:Pitch}Mtr")
+    fine: ClassVar[dict] = {
+        "fpitch": Cpt(EpicsMotor, "Mono:HDCM-Ax:FP}Mtr"),
+        "roll": Cpt(EpicsMotor, "Mono:HDCM-Ax:Roll}Mtr"),
+    }
     h = Cpt(EpicsMotor, "Mono:HDCM-Ax:TX}Mtr")
     v = Cpt(EpicsMotor, "Mono:HDCM-Ax:TY}Mtr")
+
+
+class Energy(PseudoPositioner):
     bragg = Cpt(EpicsMotor, "Mono:HDCM-Ax:Bragg}Mtr")
     cgap = Cpt(EpicsMotor, "Mono:HDCM-Ax:HG}Mtr")
-    c2 = DDC(
+    # Synthetic Axis
+    energy = Cpt(PseudoSingle, egu="KeV")
+
+    # Energy "limits"
+    _low = 5.0  # TODO: CHECK THIS VALUE
+    _high = 15.0  # TODO: CHECK THIS VALUE
+
+    # Set up constants
+    Xoffset = 20.0  # mm
+    d_111 = 3.1286911960950756
+    ANG_OVER_KEV = 12.3984
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.energy.readback.name = "energy"
+        self.energy.setpoint.name = "energy_setpoint"
+
+    def energy_to_positions(self, target_energy: float):
+        """Compute undulator and mono positions given a target energy
+
+        Parameters
+        ----------
+        target_energy : float
+            Target energy in keV
+
+        Returns
+        -------
+        bragg : float
+            The angle to set the monocromotor in radians
+        gap : float
+            The gap position in millimeters
+        """
+
+        # Calculate Bragg RBV
+        bragg = np.arcsin((self.ANG_OVER_KEV / target_energy) / (2 * self.d_111))
+
+        # Calculate C2X
+        gap = self.Xoffset / 2 / np.cos(bragg)
+
+        return bragg, gap
+
+    @pseudo_position_argument
+    def forward(self, p_pos):
+        energy = p_pos.energy  # energy assumed in keV
+        bragg, gap = self.energy_to_positions(energy)
+        return self.RealPosition(bragg=np.rad2deg(bragg), cgap=gap)
+
+    @real_position_argument
+    def inverse(self, r_pos):
+        bragg = np.deg2rad(r_pos.bragg)
+        e = self.ANG_OVER_KEV / (2 * self.d_111 * np.sin(bragg))
+        return self.PseudoPosition(energy=float(e))
+
+
+class VPM(Device):
+    fs = DDC(
         {
-            "p": (EpicsMotor, "Mono:HDCM-Ax:Pitch}Mtr", {}),
-            "r": (EpicsMotor, "Mono:HDCM-Ax:Roll}Mtr", {}),
-            "fp": (EpicsMotor, "Mono:HDCM-Ax:FP}Mtr", {}),
+            "y": (EpicsMotor, "FS:VPM-Ax:Y}Mtr", {}),
         }
     )
+
+    slit = DDC(
+        {
+            "hg": (EpicsMotor, "Slt:VPM-Ax:HG}Mtr", {}),
+            "hc": (EpicsMotor, "Slt:VPM-Ax:HC}Mtr", {}),
+            "vg": (EpicsMotor, "Slt:VPM-Ax:VG}Mtr", {}),
+            "vc": (EpicsMotor, "Slt:VPM-Ax:VC}Mtr", {}),
+        }
+    )
+    mir = DDC(
+        {
+            "us_j": (EpicsMotor, "Mir:VPM-Ax:YUC}Mtr", {}),
+            "ib_j": (EpicsMotor, "Mir:VPM-Ax:YDI}Mtr", {}),
+            "ob_j": (EpicsMotor, "Mir:VPM-Ax:YDO}Mtr", {}),
+            "p": (EpicsMotor, "Mir:VPM-Ax:Pitch}Mtr", {}),
+            "r": (EpicsMotor, "Mir:VPM-Ax:Roll}Mtr", {}),
+            "y": (EpicsMotor, "Mir:VPM-Ax:TY}Mtr", {}),
+            "x": (EpicsMotorRO, "Mir:VPM-Ax:TX}Mtr", {}),
+            "yaw": (EpicsMotorRO, "Mir:VPM-Ax:Yaw}Mtr", {}),
+            "us_lt": (EpicsMotorRO, "Mir:VPM-Ax:XU}Mtr", {}),
+            "ds_lt": (EpicsMotorRO, "Mir:VPM-Ax:XD}Mtr", {}),
+            "us_b": (EpicsMotorRO, "Mir:VPM-Ax:UB}Mtr", {}),
+            "ds_b": (EpicsMotorRO, "Mir:VPM-Ax:DB}Mtr", {}),
+            "bend": (EpicsMotorRO, "Mir:VPM-Ax:Bnd}Mtr", {}),
+            "bend_off": (EpicsMotorRO, "Mir:VPM-Ax:BndOff}Mtr", {}),
+        }
+    )
+
+
+class HPM(Device):
+    fs = DDC(
+        {
+            "y": (EpicsMotor, "FS:HPM-Ax:Y}Mtr", {}),
+        }
+    )
+
+    slit = DDC(
+        {
+            "hg": (EpicsMotor, "Slt:HPM-Ax:HG}Mtr", {}),
+            "hc": (EpicsMotor, "Slt:HPM-Ax:HC}Mtr", {}),
+            "vg": (EpicsMotor, "Slt:HPM-Ax:VG}Mtr", {}),
+            "vc": (EpicsMotor, "Slt:HPM-Ax:VC}Mtr", {}),
+        }
+    )
+    mir = DDC(
+        {
+            "us_j": (EpicsMotor, "Mir:HPM-Ax:YUC}Mtr", {}),
+            "ib_j": (EpicsMotor, "Mir:HPM-Ax:YDI}Mtr", {}),
+            "ob_j": (EpicsMotor, "Mir:HPM-Ax:YDO}Mtr", {}),
+            "p": (EpicsMotor, "Mir:HPM-Ax:Pitch}Mtr", {}),
+            "r": (EpicsMotor, "Mir:HPM-Ax:Roll}Mtr", {}),
+            "y": (EpicsMotor, "Mir:HPM-Ax:TY}Mtr", {}),
+            "bend": (EpicsMotor, "Mir:HPM-Ax:Bnd}Mtr", {}),
+            "bend_off": (EpicsMotor, "Mir:HPM-Ax:BndOff}Mtr", {}),
+            "us_x": (EpicsMotor, "Mir:HPM-Ax:XU}Mtr", {}),
+            "ds_x": (EpicsMotor, "Mir:HPM-Ax:XD}Mtr", {}),
+            "x": (EpicsMotor, "Mir:HPM-Ax:TX}Mtr", {}),
+            "yaw": (EpicsMotorRO, "Mir:HPM-Ax:Yaw}Mtr", {}),
+            "us_lt": (EpicsMotorRO, "Mir:HPM-Ax:XU}Mtr", {}),
+            "ds_lt": (EpicsMotorRO, "Mir:HPM-Ax:XD}Mtr", {}),
+            "us_b": (EpicsMotorRO, "Mir:HPM-Ax:UB}Mtr", {}),
+            "ds_b": (EpicsMotorRO, "Mir:HPM-Ax:DB}Mtr", {}),
+        }
+    )
+
+
+class DM2(Device):
+    fs = DDC(
+        {
+            "y": (EpicsMotor, "FS:DM2-Ax:Y}Mtr", {}),
+        }
+    )
+    foil = Cpt(EpicsMotor, "IM:DM2-Ax:Y}Mtr")
 
 
 class DM3(Device):
@@ -182,7 +274,7 @@ class VKB(Device):
     )
     fs = DDC(
         {
-            "y": (EpicsMotor, "FS:KBv-Ax:FS}Mtr", {}),
+            "y": (EpicsMotor, "Mir:KBv-Ax:FS}Mtr", {}),
         }
     )
 
