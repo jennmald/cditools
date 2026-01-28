@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import bluesky.plans as bps
+
 
 def pencil_scan(slit, cam, start, stop, num_points):
     """
@@ -18,5 +21,3 @@ def pencil_scan(slit, cam, start, stop, num_points):
         The number of points to scan between start and stop.
     """
     yield from bps.scan(cam, slit, start, stop, num_points)
-
-
