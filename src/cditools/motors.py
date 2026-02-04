@@ -2,9 +2,18 @@ from __future__ import annotations
 
 from typing import ClassVar
 
+import bluesky.plan_stubs as bps
 import numpy as np
 from ophyd import Component as Cpt  # type: ignore[import-not-found]
-from ophyd import Device, EpicsMotor, PseudoPositioner, PseudoSingle
+from ophyd import (
+    Device,
+    EpicsMotor,
+    EpicsSignal,
+    EpicsSignalRO,
+    PseudoPositioner,
+    PseudoSingle,
+    PVPositionerPC,
+)
 from ophyd import DynamicDeviceComponent as DDC
 from ophyd.pseudopos import (
     pseudo_position_argument,
@@ -77,6 +86,7 @@ class DMM(Device):
 
 #### IDK IF WE NEED THESE CLASSES ##################################
 
+
 # Setup HDCM
 class HDCMPiezoRoll(PVPositionerPC):
     setpoint = Cpt(EpicsSignal, "")
@@ -117,7 +127,9 @@ class HDCMPiezoPitch(PVPositionerPC):
     def reset_pid(self):
         yield from bps.mov(self.pid_I, 0.0)
 
+
 ##################################################################
+
 
 class DCMBase(Device):
     pitch = Cpt(EpicsMotor, "Mono:HDCM-Ax:Pitch}Mtr")
