@@ -13,6 +13,7 @@ from ophyd import (
     PseudoPositioner,
     PseudoSingle,
     PVPositionerPC,
+    Signal,
 )
 from ophyd import DynamicDeviceComponent as DDC
 from ophyd.pseudopos import (
@@ -83,54 +84,6 @@ class DMM(Device):
     )
     zoff = Cpt(EpicsMotor, "Mono:DMM-Ax:TZ}Mtr")
 
-
-#### IDK IF WE NEED THESE CLASSES ##################################
-
-
-# Setup HDCM
-class HDCMPiezoRoll(PVPositionerPC):
-    setpoint = Cpt(EpicsSignal, "")
-    readback = Cpt(EpicsSignalRO, "")
-    # pid_enabled = Cpt(
-    #     EpicsSignal,
-    #     "XF:05IDD-CT{FbPid:01}PID:on",
-    #     name="pid_enabled",
-    #     add_prefix=()
-    # )
-    # pid_I = Cpt(
-    #     EpicsSignal,
-    #     "XF:05IDD-CT{FbPid:01}PID.I",
-    #     name="pid_I",
-    #     add_prefix=()
-    # )
-
-    def reset_pid(self):
-        yield from bps.mov(self.pid_I, 0.0)
-
-
-class HDCMPiezoPitch(PVPositionerPC):
-    setpoint = Cpt(EpicsSignal, "")
-    readback = Cpt(EpicsSignalRO, "")
-    # pid_enabled = Cpt(
-    #     EpicsSignal,
-    #     "XF:05IDD-CT{FbPid:02}PID:on",
-    #     name="pid_enabled",
-    #     add_prefix=()
-    # )
-    # pid_I = Cpt(
-    #     EpicsSignal,
-    #     "XF:05IDD-CT{FbPid:02}PID.I",
-    #     name="pid_I",
-    #     add_prefix=()
-    # )
-
-    def reset_pid(self):
-        yield from bps.mov(self.pid_I, 0.0)
-
-
-##################################################################
-
-
 class DCMBase(Device):
     pitch = Cpt(EpicsMotor, "Mono:HDCM-Ax:Pitch}Mtr")
     fine: ClassVar[dict] = {
@@ -146,23 +99,42 @@ class Energy(PseudoPositioner):
     cgap = Cpt(EpicsMotor, "Mono:HDCM-Ax:HG}Mtr")
     # Synthetic Axis
     energy = Cpt(PseudoSingle, egu="KeV")
-    c2_x = energy.c2_x
+    
+    egu = Cpt(Signal, None, add_prefix=(), value='keV', kind="config")
+    motor_egu = Cpt(Signal, None, add_prefix=(), value='eV', kind="config")
+
+    ### not sure what PV should be used for the insertion device, example from SRX
+    # u_gap = Cpt(InsertionDevice, "SR:C5-ID:G1{IVU21:1")
+    # _u_gap_offset = 0
+    ### same for c2_x
+    # c2_x = Cpt(EpicsMotor, "XF:05IDA-OP:1{Mono:HDCM-Ax:X2}Mtr", add_prefix=(), read_attrs=["user_readback"])
+    # epics_d_spacing = EpicsSignal("XF:05IDA-CT{IOC:Status01}DCMDspacing.VAL")
+    # epics_bragg_offset = EpicsSignal("XF:05IDA-CT{IOC:Status01}BraggOffset.VAL")
 
     # Energy "limits"
-    _low = 5.0  # TODO: CHECK THIS VALUE
-    _high = 15.0  # TODO: CHECK THIS VALUE
+    _low = 5.0  # TODO: CHECK THIS VALUE, SRX uses 4.4
+    _high = 15.0  # TODO: CHECK THIS VALUE, SRX uses 25
 
     # Set up constants
     Xoffset = 20.0  # mm
     d_111 = 3.1286911960950756
     ANG_OVER_KEV = 12.3984
 
+    # Motor enable flags
+    move_u_gap = Cpt(Signal, None, add_prefix=(), value=True)
+    move_c2_x = Cpt(Signal, None, add_prefix=(), value=True)
+    harmonic = Cpt(Signal, None, add_prefix=(), value=0, kind="config")
+    selected_harmonic = Cpt(Signal, None, add_prefix=(), value=0)
+
+    # Experimental
+    detune = Cpt(Signal, None, add_prefix=(), value=0)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.energy.readback.name = "energy"
         self.energy.setpoint.name = "energy_setpoint"
 
-    def energy_to_positions(self, target_energy: float):
+    def energy_to_positions(self, target_energy: float, undulator_harmonic, u_detune):
         """Compute undulator and mono positions given a target energy
 
         Parameters
