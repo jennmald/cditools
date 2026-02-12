@@ -149,9 +149,12 @@ class Energy(PseudoPositioner):
         gap : float
             The gap position in millimeters
         """
-
+        # Set up constants
+        delta_bragg = self._delta_bragg  
+    
         # Calculate Bragg RBV
-        bragg = np.arcsin((self.ANG_OVER_KEV / target_energy) / (2 * self.d_111))
+        bragg_RBV = np.arcsin((self.ANG_OVER_KEV / target_energy) / (2 * self.d_111)) - delta_bragg
+        bragg = bragg_RBV + delta_bragg
 
         # Calculate C2X
         gap = self.Xoffset / 2 / np.cos(bragg)
