@@ -225,7 +225,58 @@ class Energy(PseudoPositioner):
     def forward(self, p_pos):
         energy = p_pos.energy  # energy assumed in keV
         bragg, gap = self.energy_to_positions(energy)
-        return self.RealPosition(bragg=np.rad2deg(bragg), cgap=gap)
+        harmonic = self.harmonic.get()
+        if harmonic < 0 or ((harmonic % 2) == 0 and harmonic != 0):
+            raise RuntimeError(
+                f"The harmonic must be 0 or odd and positive, you set {harmonic}.  "
+                "Set `energy.harmonic` to a positive odd integer or 0."
+            )
+        detune = self.detune.get()
+        if energy <= self._low:
+            raise ValueError(
+                f"The energy you entered is too low ({energy} keV). "
+                f"Minimum energy = {self._low:.1f} keV"
+            )
+        if energy > self._high:
+            if (energy < self._low * 1000) or (energy > self._high * 1000):
+                # Energy is invalid
+                raise ValueError(
+                    f"The requested photon energy is invalid ({energy} keV). "
+                    f"Values must be in the range of {self._low:.1f} - {self._high:.1f} keV"
+                )
+            else:
+                # Energy is in eV
+                energy = energy / 1000.0
+
+        if harmonic < 3:
+            harmonic = 3
+            # Choose the right harmonic
+            braggcal, c2xcal, ugapcal = self.energy_to_positions(
+                energy, harmonic, detune
+            )
+            # Try higher harmonics until the required gap is too small
+            while True:
+                braggcal, c2xcal, ugapcal = self.energy_to_positions(
+                    energy, harmonic + 2, detune
+                )
+                if ugapcal < self.u_gap.low_limit:
+                    break
+                harmonic += 2
+
+        self.selected_harmonic.put(harmonic)
+
+        # Compute where we would move everything to in a perfect world
+        bragg, c2_x, u_gap = self.energy_to_positions(energy, harmonic, detune)
+
+        # Sometimes move the crystal gap
+        if not self.move_c2_x.get():
+            c2_x = self.c2_x.position
+
+        # Sometimes move the undulator
+        if not self.move_u_gap.get():
+            u_gap = self.u_gap.position
+
+        return self.RealPosition(bragg=np.rad2deg(bragg), c2_x=c2_x, cgap=u_gap)
 
     @real_position_argument
     def inverse(self, r_pos):
