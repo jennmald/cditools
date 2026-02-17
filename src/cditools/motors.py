@@ -227,26 +227,21 @@ class Energy(PseudoPositioner):
         bragg, gap = self.energy_to_positions(energy)
         harmonic = self.harmonic.get()
         if harmonic < 0 or ((harmonic % 2) == 0 and harmonic != 0):
-            raise RuntimeError(
-                f"The harmonic must be 0 or odd and positive, you set {harmonic}.  "
-                "Set `energy.harmonic` to a positive odd integer or 0."
-            )
+            msg = f"The harmonic must be 0 or odd and positive, you set {harmonic}. Set `energy.harmonic` to a positive odd integer or 0."
+            raise RuntimeError(msg)
         detune = self.detune.get()
         if energy <= self._low:
-            raise ValueError(
-                f"The energy you entered is too low ({energy} keV). "
-                f"Minimum energy = {self._low:.1f} keV"
-            )
+            msg = f"The energy you entered is too low ({energy} keV). "
+            msg += f"Minimum energy = {self._low:.1f} keV"
+            raise ValueError(msg)
         if energy > self._high:
             if (energy < self._low * 1000) or (energy > self._high * 1000):
                 # Energy is invalid
-                raise ValueError(
-                    f"The requested photon energy is invalid ({energy} keV). "
-                    f"Values must be in the range of {self._low:.1f} - {self._high:.1f} keV"
-                )
-            else:
-                # Energy is in eV
-                energy = energy / 1000.0
+                msg = f"The requested photon energy is invalid ({energy} keV). "
+                msg += f"Values must be in the range of {self._low:.1f} - {self._high:.1f} keV"
+                raise ValueError(msg)
+            # Energy is in eV
+            energy = energy / 1000.0
 
         if harmonic < 3:
             harmonic = 3
@@ -283,6 +278,18 @@ class Energy(PseudoPositioner):
         bragg = np.deg2rad(r_pos.bragg)
         e = self.ANG_OVER_KEV / (2 * self.d_111 * np.sin(bragg))
         return self.PseudoPosition(energy=float(e))
+
+    @pseudo_position_argument
+    def set(self, position):
+        return super().set([float(_) for _ in position])
+
+    def sync_with_epics(self):
+        self.epics_d_spacing.put(self._d_111)
+        self.epics_bragg_offset.put(self._delta_bragg)
+
+    def retune_undulator(self):
+        self.detune.put(0.0)
+        self.move(self.engergy.get()[0])
 
     # def mono_peakup(element, acquisition_time=1.0, peakup=True):
     #     """
