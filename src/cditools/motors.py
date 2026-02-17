@@ -1,18 +1,15 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import ClassVar
 
-import bluesky.plan_stubs as bps
 import numpy as np
 from ophyd import Component as Cpt  # type: ignore[import-not-found]
 from ophyd import (
     Device,
     EpicsMotor,
-    EpicsSignal,
-    EpicsSignalRO,
     PseudoPositioner,
     PseudoSingle,
-    PVPositionerPC,
     Signal,
 )
 from ophyd import DynamicDeviceComponent as DDC
@@ -20,8 +17,8 @@ from ophyd.pseudopos import (
     pseudo_position_argument,
     real_position_argument,
 )
-from pathlib import Path
 from scipy.interpolate import make_interp_spline
+
 
 class EpicsMotorRO(EpicsMotor):
     def __init__(self, *args, **kwargs):
@@ -85,6 +82,7 @@ class DMM(Device):
     )
     zoff = Cpt(EpicsMotor, "Mono:DMM-Ax:TZ}Mtr")
 
+
 class DCMBase(Device):
     pitch = Cpt(EpicsMotor, "Mono:HDCM-Ax:Pitch}Mtr")
     fine: ClassVar[dict] = {
@@ -100,9 +98,9 @@ class Energy(PseudoPositioner):
     cgap = Cpt(EpicsMotor, "Mono:HDCM-Ax:HG}Mtr")
     # Synthetic Axis
     energy = Cpt(PseudoSingle, egu="KeV")
-    
-    egu = Cpt(Signal, None, add_prefix=(), value='keV', kind="config")
-    motor_egu = Cpt(Signal, None, add_prefix=(), value='eV', kind="config")
+
+    egu = Cpt(Signal, None, add_prefix=(), value="keV", kind="config")
+    motor_egu = Cpt(Signal, None, add_prefix=(), value="eV", kind="config")
 
     ### not sure what PV should be used for the insertion device, example from SRX
     # u_gap = Cpt(InsertionDevice, "SR:C5-ID:G1{IVU21:1")
@@ -130,19 +128,29 @@ class Energy(PseudoPositioner):
     # Experimental
     detune = Cpt(Signal, None, add_prefix=(), value=0)
 
-    def __init__(self, *args, delta_bragg:int = 0, xoffset:int = 0, C2Xcal:int = 0, T2cal:int = 0, **kwargs):
+    def __init__(
+        self,
+        *args,
+        delta_bragg: int = 0,
+        xoffset: int = 0,
+        C2Xcal: int = 0,
+        T2cal: int = 0,
+        d_111: int = 0,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self._delta_bragg = delta_bragg
         self._xoffset = xoffset
         self._C2Xcal = C2Xcal
         self._T2cal = T2cal
+        self._d_111 = d_111
         self.energy.readback.name = "energy"
         self.energy.setpoint.name = "energy_setpoint"
         calib_path = Path(__file__).parent
         # this is temporary, we need to figure out if there is a calib file for CDI
         calib_file = "../data/CDIUgapCalibration.txt"
 
-        with open(calib_path / calib_file, "r") as f:
+        with Path.open(calib_path / calib_file) as f:
             next(f)
             uposlistIn = []
             elistIn = []
@@ -152,9 +160,16 @@ class Energy(PseudoPositioner):
                 if len(num) == 2:
                     uposlistIn.append(num[0])
                     elistIn.append(num[1])
-        self.etoulookup = make_interp_spline(elistIn, uposlistIn)
 
-    def energy_to_positions(self, target_energy: float, undulator_harmonic: int, u_detune: float):
+        self.etoulookup = make_interp_spline(elistIn, uposlistIn)
+        self.utoelookup = make_interp_spline(uposlistIn, elistIn)
+
+        # can't do this until we know the insertion device
+        # self.u_gap.gap.user_reacback.name = self.u_gap.name
+
+    def energy_to_positions(
+        self, target_energy: float, undulator_harmonic: int, u_detune: float
+    ):
         """Compute undulator and mono positions given a target energy
 
         Parameters
@@ -176,12 +191,17 @@ class Energy(PseudoPositioner):
             The C2X position in millimeters
         ugap : float
             The undulator gap position in microns
-        """ 
-    
+        """
+
         # Calculate Bragg RBV
-        bragg_RBV = np.arcsin((self.ANG_OVER_KEV / target_energy) / (2 * self.d_111)) - self._delta_bragg
+        bragg_RBV = (
+            np.arcsin((self.ANG_OVER_KEV / target_energy) / (2 * self.d_111))
+            - self._delta_bragg
+        )
         bragg = bragg_RBV + self._delta_bragg
-        T2 =  self._xoffset + np.sin(bragg * np.pi /180) / np.sin(2 * bragg * np.pi /180)
+        T2 = self._xoffset + np.sin(bragg * np.pi / 180) / np.sin(
+            2 * bragg * np.pi / 180
+        )
         dT2 = T2 - self._T2cal
         C2X = self._C2Xcal - dT2
 
@@ -192,6 +212,14 @@ class Energy(PseudoPositioner):
         ugap = ugap + self._u_gap_offset
 
         return bragg, gap, C2X, ugap
+
+    # def undulator_energy(self, harmonic: int = 3):
+    # ugap = self.u_gap.gap.user_readback.get() / 1000
+
+    # utoelookup = self.utoelookup
+    # cannot do thids until we know ugap for insertion device
+    # fundamental = float(utoelookup(ugap))
+    # energy = fundamental * harmonic
 
     @pseudo_position_argument
     def forward(self, p_pos):
@@ -204,6 +232,32 @@ class Energy(PseudoPositioner):
         bragg = np.deg2rad(r_pos.bragg)
         e = self.ANG_OVER_KEV / (2 * self.d_111 * np.sin(bragg))
         return self.PseudoPosition(energy=float(e))
+
+    # def mono_peakup(element, acquisition_time=1.0, peakup=True):
+    #     """
+    #         First draft of the mono peakup scan
+    #         Need more info about the axis to be scanned, the move ID, and which detector will be used for feedback.
+    #     Args:
+    #         element (string): element name
+    #         acquisition_time (float, optional): _description_. Defaults to 1.0.
+    #         peakup (bool, optional): _description_. Defaults to True.
+    #     """
+    #     getemissionE(element)
+    #     energy_x = getbindingsE(element)
+
+    #     yield from mov(energy, energy_x)
+    #     setroi(1, element)
+    #     if peakup:
+    #         yield from bps.sleep(5)
+    #         yield from peakup()
+    #     yield from xanes_plan(
+    #         erange=[energy_x - 100, energy_x + 50],
+    #         estep=[1.0],
+    #         samplename=f"{element}Foil",
+    #         filename=f"{element}Foilstd",
+    #         acqtime=acquisition_time,
+    #         shutter=True,
+    #     )
 
 
 class VPM(Device):
