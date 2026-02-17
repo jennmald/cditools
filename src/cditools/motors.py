@@ -20,7 +20,8 @@ from ophyd.pseudopos import (
     pseudo_position_argument,
     real_position_argument,
 )
-
+from pathlib import Path
+from scipy.interpolate import make_interp_spline
 
 class EpicsMotorRO(EpicsMotor):
     def __init__(self, *args, **kwargs):
@@ -105,7 +106,7 @@ class Energy(PseudoPositioner):
 
     ### not sure what PV should be used for the insertion device, example from SRX
     # u_gap = Cpt(InsertionDevice, "SR:C5-ID:G1{IVU21:1")
-    # _u_gap_offset = 0
+    _u_gap_offset = 0
     ### same for c2_x
     # c2_x = Cpt(EpicsMotor, "XF:05IDA-OP:1{Mono:HDCM-Ax:X2}Mtr", add_prefix=(), read_attrs=["user_readback"])
     # epics_d_spacing = EpicsSignal("XF:05IDA-CT{IOC:Status01}DCMDspacing.VAL")
@@ -129,18 +130,41 @@ class Energy(PseudoPositioner):
     # Experimental
     detune = Cpt(Signal, None, add_prefix=(), value=0)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, delta_bragg:int = 0, xoffset:int = 0, C2Xcal:int = 0, T2cal:int = 0, **kwargs):
         super().__init__(*args, **kwargs)
+        self._delta_bragg = delta_bragg
+        self._xoffset = xoffset
+        self._C2Xcal = C2Xcal
+        self._T2cal = T2cal
         self.energy.readback.name = "energy"
         self.energy.setpoint.name = "energy_setpoint"
+        calib_path = Path(__file__).parent
+        # this is temporary, we need to figure out if there is a calib file for CDI
+        calib_file = "../data/CDIUgapCalibration.txt"
 
-    def energy_to_positions(self, target_energy: float, undulator_harmonic, u_detune):
+        with open(calib_path / calib_file, "r") as f:
+            next(f)
+            uposlistIn = []
+            elistIn = []
+            for line in f:
+                num = [float(x) for x in line.split()]
+                # Check in case there is an extra line at the end of the calibration file
+                if len(num) == 2:
+                    uposlistIn.append(num[0])
+                    elistIn.append(num[1])
+        self.etoulookup = make_interp_spline(elistIn, uposlistIn)
+
+    def energy_to_positions(self, target_energy: float, undulator_harmonic: int, u_detune: float):
         """Compute undulator and mono positions given a target energy
 
         Parameters
         ----------
         target_energy : float
             Target energy in keV
+        undulator_harmonic : int
+            The harmonic in the undulator to use
+        u_detune : float
+            Amount to 'mistune' the undulator in keV
 
         Returns
         -------
@@ -148,18 +172,26 @@ class Energy(PseudoPositioner):
             The angle to set the monocromotor in radians
         gap : float
             The gap position in millimeters
-        """
-        # Set up constants
-        delta_bragg = self._delta_bragg  
+        C2X : float
+            The C2X position in millimeters
+        ugap : float
+            The undulator gap position in microns
+        """ 
     
         # Calculate Bragg RBV
-        bragg_RBV = np.arcsin((self.ANG_OVER_KEV / target_energy) / (2 * self.d_111)) - delta_bragg
-        bragg = bragg_RBV + delta_bragg
+        bragg_RBV = np.arcsin((self.ANG_OVER_KEV / target_energy) / (2 * self.d_111)) - self._delta_bragg
+        bragg = bragg_RBV + self._delta_bragg
+        T2 =  self._xoffset + np.sin(bragg * np.pi /180) / np.sin(2 * bragg * np.pi /180)
+        dT2 = T2 - self._T2cal
+        C2X = self._C2Xcal - dT2
 
         # Calculate C2X
-        gap = self.Xoffset / 2 / np.cos(bragg)
+        gap = self._xoffset / 2 / np.cos(bragg)
+        ugap = float(self.etoulookup((target_energy + u_detune) / undulator_harmonic))
+        ugap *= 1000
+        ugap = ugap + self._u_gap_offset
 
-        return bragg, gap
+        return bragg, gap, C2X, ugap
 
     @pseudo_position_argument
     def forward(self, p_pos):
