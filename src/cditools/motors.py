@@ -21,26 +21,26 @@ from scipy.interpolate import make_interp_spline
 
 
 class EpicsMotorRO(EpicsMotor):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: object, **kwargs: object):
         super().__init__(*args, **kwargs)
 
-    def move(self, *args, **kwargs):  # noqa: ARG002
+    def move(self, *args: object, **kwargs: object):  # noqa: ARG002
         msg = f"{self.name} is read-only and cannot be moved."
         raise PermissionError(msg)
 
-    def stop(self, *args, **kwargs):  # noqa: ARG002
+    def stop(self, *args: object, **kwargs: object):  # noqa: ARG002
         msg = f"{self.name} is read-only and cannot be stopped manually."
         raise PermissionError(msg)
 
-    def set(self, *args, **kwargs):  # noqa: ARG002
+    def set(self, *args: object, **kwargs: object):  # noqa: ARG002
         msg = f"{self.name} is read-only and cannot be set."
         raise PermissionError(msg)
 
-    def set_position(self, *args, **kwargs):  # noqa: ARG002
+    def set_position(self, *args: object, **kwargs: object):  # noqa: ARG002
         msg = f"{self.name} is read-only and its position cannot be set."
         raise PermissionError(msg)
 
-    def _readonly_put(self, *args, **kwargs):  # noqa: ARG002
+    def _readonly_put(self, *args: object, **kwargs: object):  # noqa: ARG002
         msg = f"{self.name} is read-only and cannot write PVs."
         raise PermissionError(msg)
 
@@ -85,7 +85,7 @@ class DMM(Device):
 
 class DCMBase(Device):
     pitch = Cpt(EpicsMotor, "Mono:HDCM-Ax:Pitch}Mtr")
-    fine: ClassVar[dict] = {
+    fine: ClassVar[dict[str, Cpt]] = {
         "fpitch": Cpt(EpicsMotor, "Mono:HDCM-Ax:FP}Mtr"),
         "roll": Cpt(EpicsMotor, "Mono:HDCM-Ax:Roll}Mtr"),
     }
@@ -130,13 +130,13 @@ class Energy(PseudoPositioner):
 
     def __init__(
         self,
-        *args,
+        *args: object,
         delta_bragg: int = 0,
         xoffset: int = 0,
         C2Xcal: int = 0,
         T2cal: int = 0,
         d_111: int = 0,
-        **kwargs,
+        **kwargs: object,
     ):
         super().__init__(*args, **kwargs)
         self._delta_bragg = delta_bragg
@@ -168,7 +168,10 @@ class Energy(PseudoPositioner):
         # self.u_gap.gap.user_reacback.name = self.u_gap.name
 
     def energy_to_positions(
-        self, target_energy: float, undulator_harmonic: int, u_detune: float
+        self,
+        target_energy: float,
+        undulator_harmonic: int = 0,
+        u_detune: float = 0.0,
     ):
         """Compute undulator and mono positions given a target energy
 
@@ -222,9 +225,9 @@ class Energy(PseudoPositioner):
     # energy = fundamental * harmonic
 
     @pseudo_position_argument
-    def forward(self, p_pos):
+    def forward(self, p_pos: object):
         energy = p_pos.energy  # energy assumed in keV
-        bragg, gap = self.energy_to_positions(energy)
+        bragg, gap, _, _ = self.energy_to_positions(energy)
         harmonic = self.harmonic.get()
         if harmonic < 0 or ((harmonic % 2) == 0 and harmonic != 0):
             msg = f"The harmonic must be 0 or odd and positive, you set {harmonic}. Set `energy.harmonic` to a positive odd integer or 0."
@@ -274,13 +277,13 @@ class Energy(PseudoPositioner):
         return self.RealPosition(bragg=np.rad2deg(bragg), c2_x=c2_x, cgap=u_gap)
 
     @real_position_argument
-    def inverse(self, r_pos):
+    def inverse(self, r_pos: object):
         bragg = np.deg2rad(r_pos.bragg)
         e = self.ANG_OVER_KEV / (2 * self.d_111 * np.sin(bragg))
         return self.PseudoPosition(energy=float(e))
 
     @pseudo_position_argument
-    def set(self, position):
+    def set(self, position: list[int | float]):
         return super().set([float(_) for _ in position])
 
     def sync_with_epics(self):
