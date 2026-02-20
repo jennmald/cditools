@@ -128,9 +128,11 @@ class EigerBase(EigerDetector):
         "cam1:",
         name="file_handler",
         # TODO: These paths need to be changed once the detector is deployed at CDI.
-        write_path_template="/nsls2/data/tst/legacy/mock-proposals/2025-2/pass-56789/assets/eiger/%Y/%m/%d",
-        root="/nsls2/data/tst/legacy/mock-proposals/2025-2/pass-56789/assets/eiger",
+        # write_path_template="/nsls2/data/tst/legacy/mock-proposals/2025-2/pass-56789/assets/eiger/%Y/%m/%d",
+        # root="/nsls2/data/tst/legacy/mock-proposals/2025-2/pass-56789/assets/eiger",
+        root_str="/nsls2/data/cdi/proposals/",
     )
+    _asset_path = "eiger"
     stats1 = Cpt(StatsPlugin, "Stats1:")
     stats2 = Cpt(StatsPlugin, "Stats2:")
     stats3 = Cpt(StatsPlugin, "Stats3:")
@@ -142,10 +144,20 @@ class EigerBase(EigerDetector):
     roi4 = Cpt(ROIPlugin, "ROI4:")
     proc1 = Cpt(ProcessPlugin, "Proc1:")
 
+    def _update_paths(self):
+        self.write_path_template = self.root_path_str + "%Y/%m/%d/"
+        self.read_path_template = self.root_path_str + "%Y/%m/%d/"
+        self.reg_root = self.root_path_str
+
+    @property
+    def root_path_str(self):
+        return f"{self.root_str}/{self._md['cycle']}/{self._md['data_session']}/assets/{self._asset_path}"
+
     def stage(self, *args: Any, **kwargs: dict[str, Any]) -> list[object]:
         staged_devices: list[object] = super().stage(*args, **kwargs)
         self.cam.manual_trigger.set(True).wait(5.0)
         file_write_path: Path = Path(cast(str, self.file_handler.file_path.get()))
+        self._update_paths()
         if not Path.exists(file_write_path):
             msg = f"Path {file_write_path} does not exist."
             raise FileNotFoundError(msg)
