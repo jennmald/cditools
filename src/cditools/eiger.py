@@ -132,7 +132,7 @@ class EigerBase(EigerDetector):
         # root="/nsls2/data/tst/legacy/mock-proposals/2025-2/pass-56789/assets/eiger",
         root_str="/nsls2/data/cdi/proposals/",
     )
-    _asset_path = "eiger"
+    _asset_path = "eiger2-1"
     stats1 = Cpt(StatsPlugin, "Stats1:")
     stats2 = Cpt(StatsPlugin, "Stats2:")
     stats3 = Cpt(StatsPlugin, "Stats3:")
